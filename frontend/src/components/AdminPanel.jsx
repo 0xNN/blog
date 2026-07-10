@@ -82,14 +82,14 @@ export default function AdminPanel() {
                 <div className="flex items-center rounded-full border border-border p-0.5 text-xs font-semibold">
                     {[
                         ["invites", `${t("Undangan", "Invites")}`],
-                        ["comments", `${t("Moderasi", "Moderation")}`],
+                        ["moderation", `${t("Moderasi", "Moderation")}`],
                         ["subscribers", `${t("Subscriber", "Subscribers")}`],
                     ].map(([k, label]) => (
                         <button
                             key={k}
-                            onClick={() => setTab(k)}
-                            data-testid={`admin-tab-${k}`}
-                            className={`px-3 py-1.5 rounded-full transition ${tab === k ? "bg-foreground text-background" : "text-muted-foreground"}`}
+                            onClick={() => setTab(k === "moderation" ? "comments" : k)}
+                            data-testid={`admin-tab-${k === "moderation" ? "moderation" : k}`}
+                            className={`px-3 py-1.5 rounded-full transition ${(tab === k || (k === "moderation" && tab === "comments")) ? "bg-foreground text-background" : "text-muted-foreground"}`}
                         >
                             {label}
                         </button>

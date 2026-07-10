@@ -13,6 +13,16 @@ function setHeadTags(tags) {
 
     for (const t of tags) {
         if (!t) continue;
+        // For meta[name] tags that already exist (e.g. CRA default 'description'),
+        // update in place instead of duplicating.
+        if (t.tag === "meta" && t.attrs?.name) {
+            const existing = document.head.querySelector(`meta[name="${t.attrs.name}"]:not([data-seo])`);
+            if (existing) {
+                existing.setAttribute("content", t.attrs.content ?? "");
+                existing.setAttribute("data-seo", "1");
+                continue;
+            }
+        }
         const el = document.createElement(t.tag);
         el.setAttribute("data-seo", "1");
         Object.entries(t.attrs || {}).forEach(([k, v]) => {
