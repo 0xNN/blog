@@ -30,7 +30,7 @@ async def send_email(to: str, subject: str, html: str, sender: Optional[str] = N
 
     _prime()
     params = {
-        "from": sender or os.environ.get("SENDER_EMAIL", DEFAULT_SENDER),
+        "from": sender or os.environ.get("SENDER_EMAIL") or DEFAULT_SENDER,
         "to": [to],
         "subject": subject,
         "html": html,

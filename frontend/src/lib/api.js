@@ -8,4 +8,57 @@ const api = axios.create({
     withCredentials: true,
 });
 
+// ---- Refresh-on-401 interceptor ----
+// If any request returns 401, try /auth/refresh once, then replay the original.
+// Multiple concurrent 401s share a single in-flight refresh promise.
+let refreshInFlight = null;
+
+const AUTH_SKIP_PATHS = [
+    "/auth/login",
+    "/auth/register",
+    "/auth/logout",
+    "/auth/refresh",
+    "/auth/me",
+    "/auth/emergent/session",
+];
+
+function isAuthPath(url = "") {
+    return AUTH_SKIP_PATHS.some((p) => url.includes(p));
+}
+
+api.interceptors.response.use(
+    (r) => r,
+    async (error) => {
+        const original = error.config;
+        const status = error.response?.status;
+
+        if (
+            status !== 401 ||
+            !original ||
+            original._retried ||
+            isAuthPath(original.url || "")
+        ) {
+            return Promise.reject(error);
+        }
+
+        original._retried = true;
+
+        try {
+            if (!refreshInFlight) {
+                refreshInFlight = axios
+                    .post(`${API_BASE}/auth/refresh`, {}, { withCredentials: true })
+                    .finally(() => {
+                        // Small delay to let cookies propagate, then clear the promise
+                        setTimeout(() => { refreshInFlight = null; }, 100);
+                    });
+            }
+            await refreshInFlight;
+        } catch (refreshErr) {
+            return Promise.reject(error);
+        }
+
+        return api.request(original);
+    }
+);
+
 export default api;

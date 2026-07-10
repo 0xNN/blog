@@ -31,6 +31,7 @@ from storage import init_storage, put_object, get_object, APP_NAME
 from ai_service import ai_generate
 from email_service import send_newsletter_welcome, send_author_invite
 from seed_data import run_seed
+from seed_new_categories import seed_new_categories
 
 
 # --- DB ---
@@ -864,6 +865,9 @@ async def startup():
     # seed data
     try:
         await run_seed(db)
+        inserted = await seed_new_categories(db)
+        if inserted:
+            logger.info(f"Seeded {inserted} articles for new categories")
         logger.info("Seed complete")
     except Exception as e:
         logger.warning(f"Seed skipped: {e}")
