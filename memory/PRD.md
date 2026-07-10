@@ -40,6 +40,18 @@ Developer Hub — Blog Multi-Niche untuk Developer. A bilingual (ID + EN) develo
 - Homepage, article detail (TOC, reading progress, syntax highlighting, Sandpack), editor with AI assist, dashboard
 - Sitemap.xml, ads.txt
 
+### Iteration 3 (2026-02) — Auth, Monetization, Content Expansion ✅
+- **P1 Real Resend delivery**: `RESEND_API_KEY` set; newsletter welcome + author invites actually send when recipient is verified in Resend dashboard. Free-tier restriction (onboarding@resend.dev only delivers to account owner email) handled gracefully — endpoints still return success, `email.status` in response reveals send outcome
+- **P1 `/api/auth/refresh` rotation**: JWT refresh-token cookie is single-use (SHA-256 hash stored in `revoked_tokens` with 30-day TTL). Reuse returns 401.
+- **P1 View throttling → Mongo TTL**: `article_views` collection with `expireAfterSeconds=1800` TTL index + unique `key` for atomic dedup. Multi-worker safe.
+- **P2 Google OAuth (Emergent)**: `/api/auth/emergent/session` verifies session_id from Emergent, upserts user (schema-compatible with JWT users), issues our JWT cookies. Frontend `GoogleLoginButton` + `AuthCallback` page — dynamic origin, no hardcoded URLs. Existing email/password JWT auth preserved.
+- **P2 Draft autosave**: EditorPage autosaves 5s after typing stops; badge "Tersimpan/Saved HH:MM" appears in toolbar
+- **P2 Related articles**: `/api/articles/{id}/related` endpoint — shared-tag ranking first (weighted by overlap count), fallback to same category. Rendered under article body via `RelatedArticles.jsx`
+- **New categories** (11 total): added `ai-agents`, `blockchain-crypto`, `trading`
+
+### Bugs fixed in Iter 3
+- Editor `save()` was missing `opts` destructure → `silent` ReferenceError blocking all save flows. Fixed.
+
 ### Iteration 2 (2026-02) — SEO + Community + Admin ✅
 - **P0 Header lang switcher slug sync**: uses `/api/articles/{id}/siblings` endpoint to navigate to the correct translated slug
 - **P0 Resend email service**: `email_service.py` — graceful no-op when `RESEND_API_KEY` is empty; sends newsletter welcome + author invitation emails when configured

@@ -120,8 +120,9 @@ export default function EditorPage() {
         };
     };
 
-    const save = async (publish = false) => {
-        setSaving(true);
+    const save = async (publish = false, opts = {}) => {
+        const { silent = false } = opts;
+        if (!silent) setSaving(true);
         setError("");
         try {
             const body = {
