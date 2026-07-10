@@ -1,56 +1,79 @@
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { LanguageProvider, useLang } from "@/contexts/LanguageContext";
+import { Toaster } from "@/components/ui/sonner";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import Home from "@/pages/Home";
+import ArticleList from "@/pages/ArticleList";
+import ArticleDetail from "@/pages/ArticleDetail";
+import AuthorPage from "@/pages/AuthorPage";
+import AuthorsPage from "@/pages/AuthorsPage";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import Dashboard from "@/pages/Dashboard";
+import EditorPage from "@/pages/EditorPage";
+import NotFound from "@/pages/NotFound";
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+import "@/index.css";
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+function AppShell() {
+    return (
+        <>
+            <div className="noise-overlay" />
+            <Header />
+            <main className="min-h-[70vh] relative z-10">
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="blog" element={<ArticleList />} />
+                    <Route path="blog/:slug" element={<ArticleDetail />} />
+                    <Route path="category/:category" element={<ArticleList />} />
+                    <Route path="search" element={<ArticleList />} />
+                    <Route path="author/:slug" element={<AuthorPage />} />
+                    <Route path="authors" element={<AuthorsPage />} />
+                    <Route path="login" element={<Login />} />
+                    <Route path="register" element={<Register />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="editor/:id" element={<EditorPage />} />
+                    <Route path="*" element={<NotFound />} />
+                </Routes>
+            </main>
+            <Footer />
+        </>
+    );
+}
 
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+function LangGate() {
+    const location = useLocation();
+    const { setLang } = useLang();
+    useEffect(() => {
+        const seg = location.pathname.split("/")[1];
+        if (seg === "id" || seg === "en") setLang(seg);
+    }, [location.pathname, setLang]);
+    return <AppShell />;
+}
 
 function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
-  );
+    return (
+        <ThemeProvider>
+            <LanguageProvider>
+                <AuthProvider>
+                    <BrowserRouter>
+                        <Routes>
+                            <Route path="/" element={<Navigate to="/id" replace />} />
+                            <Route path="/id/*" element={<LangGate />} />
+                            <Route path="/en/*" element={<LangGate />} />
+                            <Route path="*" element={<Navigate to="/id" replace />} />
+                        </Routes>
+                    </BrowserRouter>
+                    <Toaster />
+                </AuthProvider>
+            </LanguageProvider>
+        </ThemeProvider>
+    );
 }
 
 export default App;
