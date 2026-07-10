@@ -151,9 +151,18 @@ export default function Home() {
                         </Link>
                     </div>
                     <div className="grid sm:grid-cols-2 gap-6">
-                        {[...secondaryFeatured, ...latest].slice(0, 6).map((a) => (
-                            <ArticleCard key={a.id} article={a} />
-                        ))}
+                        {(() => {
+                            const merged = [...secondaryFeatured, ...latest];
+                            const seen = new Set();
+                            const unique = merged.filter((a) => {
+                                if (seen.has(a.id)) return false;
+                                seen.add(a.id);
+                                return true;
+                            });
+                            return unique.slice(0, 6).map((a) => (
+                                <ArticleCard key={`latest-${a.id}`} article={a} />
+                            ));
+                        })()}
                     </div>
                 </div>
 
@@ -168,7 +177,7 @@ export default function Home() {
                                 const c = a[`content_${lang}`] || a.content_id;
                                 if (!c) return null;
                                 return (
-                                    <li key={a.id}>
+                                    <li key={`pop-${a.id}`}>
                                         <Link
                                             to={`/${lang}/blog/${c.slug}`}
                                             data-testid={`popular-${c.slug}`}

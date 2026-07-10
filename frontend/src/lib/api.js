@@ -18,7 +18,6 @@ const AUTH_SKIP_PATHS = [
     "/auth/register",
     "/auth/logout",
     "/auth/refresh",
-    "/auth/me",
     "/auth/emergent/session",
 ];
 
@@ -47,10 +46,7 @@ api.interceptors.response.use(
             if (!refreshInFlight) {
                 refreshInFlight = axios
                     .post(`${API_BASE}/auth/refresh`, {}, { withCredentials: true })
-                    .finally(() => {
-                        // Small delay to let cookies propagate, then clear the promise
-                        setTimeout(() => { refreshInFlight = null; }, 100);
-                    });
+                    .finally(() => { refreshInFlight = null; });
             }
             await refreshInFlight;
         } catch (refreshErr) {
