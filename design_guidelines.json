@@ -1,0 +1,97 @@
+{
+  "theme_strategy": "Dark mode default-friendly. 'Old Money Tech' aesthetic: high-contrast, crisp containers, and a heavy emphasis on editorial typography.",
+  "typography": {
+    "headings": {
+      "font_family": "'Cabinet Grotesk', sans-serif",
+      "styles": "Tracking-tight, crisp, high contrast. Never use generic Inter for headings.",
+      "scales": {
+        "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-none",
+        "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight leading-tight",
+        "h3": "text-xl sm:text-2xl font-semibold"
+      }
+    },
+    "body": {
+      "font_family": "'Spectral', 'Merriweather', serif",
+      "styles": "Highly readable, elegant serif for long-form content, giving a premium editorial feel (Josh Comeau style)."
+    },
+    "code": {
+      "font_family": "'JetBrains Mono', 'Fira Code', monospace",
+      "styles": "Strictly for code blocks, inline code, and technical data. Use text-sm for better inline alignment."
+    }
+  },
+  "colors": {
+    "dark_mode": {
+      "background": "#050505",
+      "surface": "#121212",
+      "border": "#27272A",
+      "text_primary": "#F4F4F5",
+      "text_secondary": "#A1A1AA",
+      "accent": "#0055FF"
+    },
+    "light_mode": {
+      "background": "#FAFAFA",
+      "surface": "#FFFFFF",
+      "border": "#E4E4E7",
+      "text_primary": "#09090B",
+      "text_secondary": "#52525B",
+      "accent": "#0055FF"
+    },
+    "rules": "Avoid purple/violet AI slop gradients. Stick to a monochromatic base with one sharp accent color for links/interactive elements. Use solid or highly subtle borders."
+  },
+  "layouts": {
+    "homepage": "Card-based bento grid (grid-cols-1 md:grid-cols-2 lg:grid-cols-3) with a featured hero article spanning full width. Generous spacing (gap-6 or gap-8).",
+    "article_page": "max-w-3xl centered for readability. Sticky TOC on the right side for desktop (xl:block). Fixed reading progress bar at the very top. Code playground blocks embedded in content.",
+    "spacing": "Use generous paddings (py-16, py-24). Article paragraphs should have loose line-height (leading-relaxed or leading-loose)."
+  },
+  "components": {
+    "cards": "Flat design, 1px solid border (border-border), rounded-xl. On hover: -translate-y-1, subtle glow or border color shift.",
+    "buttons": "Pill-shaped or slightly rounded (rounded-md) sharp buttons. High contrast (black on white or white on black).",
+    "reading_progress": "Fixed position top-0 left-0 h-1 bg-[#0055FF] z-50.",
+    "language_switcher": "Subtle toggle in the article header. Pill-shaped, active state gets a solid background.",
+    "sticky_toc": "Position sticky top-24. Small text (text-sm), mono font for list items, muted colors until active. Must use IntersectionObserver to highlight current active section."
+  },
+  "visual_enhancers": {
+    "micro_interactions": "Hover states on cards (image zoom, border highlight). Smooth scrolling (Lenis recommended).",
+    "shadows": "Minimal. Rely on 1px borders instead of drop shadows. If used, use extremely subtle ambient shadows."
+  },
+  "image_urls": {
+    "hero_article": {
+      "url": "https://images.unsplash.com/photo-1542903660-eedba2cda473?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzF8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMHRlY2huaWNhbCUyMGNvZGUlMjBwYXR0ZXJufGVufDB8fHx8MTc4MzY2NTExMHww&ixlib=rb-4.1.0&q=85",
+      "description": "Abstract technical code pattern for main featured tech article."
+    },
+    "desk_setup_1": {
+      "url": "https://images.unsplash.com/photo-1510519138101-570d1dca3d66?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHwyfHxtaW5pbWFsJTIwZGVzayUyMHNldHVwJTIwdGVjaHxlbnwwfHx8fDE3ODM2NjUxMTB8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Minimal desk setup for Career/Indie Hacker posts."
+    },
+    "desk_setup_2": {
+      "url": "https://images.unsplash.com/photo-1590212151175-e58edd96185b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHwxfHxtaW5pbWFsJTIwZGVzayUyMHNldHVwJTIwdGVjaHxlbnwwfHx8fDE3ODM2NjUxMTB8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Clean monitor setup for Tools Review."
+    },
+    "ai_concept": {
+      "url": "https://images.unsplash.com/photo-1646583288948-24548aedffd8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwyfHxhcnRpZmljaWFsJTIwaW50ZWxsaWdlbmNlJTIwY29uY2VwdCUyMGRhcmt8ZW58MHx8fHwxNzgzNjY1MTEwfDA&ixlib=rb-4.1.0&q=85",
+      "description": "AI letters for AI Tools & Prompt Engineering pillar."
+    },
+    "coding_workspace": {
+      "url": "https://images.unsplash.com/photo-1562813733-b31f71025d54?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHwxfHxkZXZlbG9wZXIlMjBjb2RpbmclMjBkYXJrJTIwd29ya3NwYWNlfGVufDB8fHx8MTc4MzY2NTExMHww&ixlib=rb-4.1.0&q=85",
+      "description": "Developer coding in dark workspace for Tutorial Coding posts."
+    }
+  },
+  "instructions_to_main_agent": [
+    "Use Lucide-react for standard icons.",
+    "Implement Sandpack (by CodeSandbox) or a highly stylized syntax highlighter for interactive code playgrounds.",
+    "Use custom prose classes for MDX rendering to apply the Serif font for body and appropriate spacing.",
+    "Ensure dark mode is the default, and implement next-themes for toggling.",
+    "Ensure the TOC uses an IntersectionObserver to highlight the current section.",
+    "For all interactive elements (buttons, links, inputs, form submissions, language switchers, dark mode toggles), include data-testid attributes.",
+    "Build the application using .js/.jsx extensions instead of .tsx."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Do not use generic centered layouts. Use clear structural alignments.",
+    "Create depth through layered design elements with z-index hierarchy, preferring crisp borders over muddy shadows.",
+    "NEVER use completely transparent backgrounds for headers/sticky elements; use backdrop-blur and a semi-transparent background.",
+    "Apply precise transition effects (e.g., transition: transform 0.2s ease) instead of universal transition: all.",
+    "NEVER use placeholder URLs for images; always use the provided Unsplash URLs.",
+    "Include hover, focus, and active states for all interactive elements to ensure accessibility.",
+    "Ensure text contrast ratios meet APCA/WCAG standards, especially over dark backgrounds."
+  ]
+}
