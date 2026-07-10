@@ -70,15 +70,25 @@ class TestCategories:
         assert r.status_code == 200
         data = r.json()
         assert isinstance(data, list)
-        assert len(data) == 8, f"expected 8 categories, got {len(data)}"
+        assert len(data) == 11, f"expected 11 categories, got {len(data)}"
         slugs = {c["slug"] for c in data}
         expected = {
             "tutorial-coding", "error-solutions", "tools-review", "developer-finance",
-            "ai-prompt", "career-interview", "nocode-lowcode", "saas-indie",
+            "ai-prompt", "ai-agents", "career-interview", "nocode-lowcode", "saas-indie",
+            "blockchain-crypto", "trading",
         }
         assert slugs == expected
         for c in data:
             assert "count" in c and isinstance(c["count"], int)
+
+    def test_new_categories_present(self, api_client):
+        r = api_client.get(f"{API}/categories", timeout=10)
+        assert r.status_code == 200
+        by_slug = {c["slug"]: c for c in r.json()}
+        for s in ("ai-agents", "blockchain-crypto", "trading"):
+            assert s in by_slug, f"missing new category {s}"
+            assert by_slug[s]["name_id"]
+            assert by_slug[s]["name_en"]
 
 
 # ----------------------- Articles -----------------------
@@ -421,9 +431,11 @@ class TestInvites:
         assert data["success"] is True
         assert "invite_id" in data
         assert "accept_url" in data and "/invite/" in data["accept_url"]
-        # Because RESEND_API_KEY empty, email must be skipped (no-op)
+        # RESEND_API_KEY is set: status may be 'sent' or 'error' (free-tier restriction).
+        # If empty, would be 'skipped'. All three are acceptable — invite must still be created.
         assert "email" in data
-        assert data["email"]["status"] == "skipped", f"expected skipped, got {data['email']}"
+        assert data["email"]["status"] in ("sent", "error", "skipped"), \
+            f"unexpected email status: {data['email']}"
         # cleanup
         owner_session.delete(f"{API}/invites/{data['invite_id']}", timeout=10)
 
@@ -612,12 +624,181 @@ class TestRSS:
         assert "<item>" in r.text
 
 
-# ----------------------- Subscribe (email no-op) -----------------------
+# ----------------------- Subscribe (still returns 201 even if Resend fails) -----------------------
 
 class TestSubscribeNoop:
-    def test_subscribe_still_succeeds_with_empty_resend_key(self, api_client):
-        # Even with RESEND_API_KEY="" the subscribe endpoint should return 201
+    def test_subscribe_still_succeeds_with_resend_configured(self, api_client):
+        # RESEND_API_KEY is set to a real re_ key, but free-tier restrictions may cause
+        # send failures for non-owner emails. Subscribe endpoint must still succeed
+        # (email failures are logged as warnings and caught gracefully).
         email = f"TEST_noopsub_{uuid.uuid4().hex[:8]}@x.io"
-        r = api_client.post(f"{API}/subscribe", json={"email": email}, timeout=10)
-        assert r.status_code == 201
+        r = api_client.post(f"{API}/subscribe", json={"email": email}, timeout=15)
+        assert r.status_code == 201, r.text[:200]
         assert r.json()["success"] is True
+
+
+# ----------------------- Iteration 3: Refresh token rotation -----------------------
+
+class TestRefreshRotation:
+    def test_refresh_missing_cookie_returns_401(self, api_client):
+        r = requests.post(f"{API}/auth/refresh", timeout=10)
+        assert r.status_code == 401
+        # Should mention refresh token
+        detail = (r.json().get("detail") or "").lower()
+        assert "refresh" in detail or "missing" in detail
+
+    def test_refresh_rotates_and_reuse_fails(self):
+        # Login fresh
+        s = requests.Session()
+        r = s.post(f"{API}/auth/login",
+                   json={"email": AUTHOR_EMAIL, "password": AUTHOR_PASSWORD}, timeout=10)
+        assert r.status_code == 200
+        old_refresh = s.cookies.get("refresh_token")
+        assert old_refresh
+        # Call refresh (cookie automatically sent by session)
+        r1 = s.post(f"{API}/auth/refresh", timeout=10)
+        assert r1.status_code == 200, r1.text[:300]
+        body = r1.json()
+        assert body["success"] is True
+        assert body["user"]["email"] == AUTHOR_EMAIL
+        # New refresh cookie should be rotated (different from old)
+        new_refresh = s.cookies.get("refresh_token")
+        assert new_refresh
+        # New session still authenticated
+        me = s.get(f"{API}/auth/me", timeout=10)
+        assert me.status_code == 200
+
+        # Now try reusing the OLD refresh token — should fail with 401 "already used"
+        r2 = requests.post(f"{API}/auth/refresh",
+                           cookies={"refresh_token": old_refresh}, timeout=10)
+        assert r2.status_code == 401, f"reuse of old refresh must be 401, got {r2.status_code} {r2.text[:200]}"
+        detail = (r2.json().get("detail") or "").lower()
+        assert "already used" in detail or "already" in detail, \
+            f"expected 'already used' message, got {r2.json()}"
+
+    def test_refresh_invalid_token(self, api_client):
+        r = requests.post(f"{API}/auth/refresh",
+                          cookies={"refresh_token": "not-a-valid-jwt"}, timeout=10)
+        assert r.status_code == 401
+
+
+# ----------------------- Iteration 3: Emergent Google Session -----------------------
+
+class TestEmergentSession:
+    def test_invalid_session_id_returns_401(self, api_client):
+        # Structural check only — do NOT use a real session_id
+        r = api_client.post(f"{API}/auth/emergent/session",
+                            json={"session_id": "definitely-not-a-real-session-id-xyz"},
+                            timeout=15)
+        assert r.status_code == 401, r.text[:300]
+        detail = (r.json().get("detail") or "").lower()
+        assert "invalid" in detail or "expired" in detail
+
+    def test_missing_session_id_returns_422(self, api_client):
+        r = api_client.post(f"{API}/auth/emergent/session", json={}, timeout=10)
+        assert r.status_code == 422
+
+
+# ----------------------- Iteration 3: Related Articles -----------------------
+
+class TestRelatedArticles:
+    def test_related_returns_up_to_3_and_excludes_source(self, api_client):
+        # pick an article that likely has tags
+        r = api_client.get(f"{API}/articles?lang=id", timeout=10)
+        assert r.status_code == 200
+        arts = r.json()
+        assert len(arts) >= 2, "need at least 2 published articles for related test"
+        source = arts[0]
+        rel = api_client.get(f"{API}/articles/{source['id']}/related?lang=id", timeout=10)
+        assert rel.status_code == 200, rel.text[:300]
+        data = rel.json()
+        assert isinstance(data, list)
+        assert len(data) <= 3
+        # source excluded
+        assert all(a["id"] != source["id"] for a in data)
+        # each item is a published article
+        for a in data:
+            assert a.get("status") == "published"
+            assert "_id" not in a
+
+    def test_related_prefers_shared_tags(self, api_client, owner_session):
+        # Create three articles: A (source), B (shared tags), C (only same category, different tags)
+        uniq = uuid.uuid4().hex[:6]
+        def _payload(name, tags, cat="tutorial-coding"):
+            u = uuid.uuid4().hex[:6]
+            return {
+                "category_slug": cat,
+                "tags": tags,
+                "cover_image": "",
+                "ads_enabled": False,
+                "featured": False,
+                "status": "published",
+                "content_id": {
+                    "title": f"TEST_{name}_{u}",
+                    "slug": f"test-rel-{name.lower()}-{u}",
+                    "excerpt": "e",
+                    "body_md": "body",
+                    "meta_description": "m",
+                },
+                "content_en": {
+                    "title": f"TEST_{name}_{u}_EN",
+                    "slug": f"test-rel-{name.lower()}-en-{u}",
+                    "excerpt": "e",
+                    "body_md": "body",
+                    "meta_description": "m",
+                },
+            }
+        tag_shared = f"tagX{uniq}"
+        a = owner_session.post(f"{API}/articles",
+                               json=_payload("SRC", [tag_shared, "auto"]), timeout=10).json()
+        b = owner_session.post(f"{API}/articles",
+                               json=_payload("SHARED", [tag_shared]), timeout=10).json()
+        c = owner_session.post(f"{API}/articles",
+                               json=_payload("OTHER", ["irrelevantZ"]), timeout=10).json()
+        try:
+            rel = api_client.get(f"{API}/articles/{a['id']}/related?lang=id&limit=3", timeout=10)
+            assert rel.status_code == 200
+            ids = [x["id"] for x in rel.json()]
+            # B (shared tags) must appear before C (only same category)
+            assert b["id"] in ids, "shared-tag article missing from related"
+            if c["id"] in ids:
+                assert ids.index(b["id"]) < ids.index(c["id"]), \
+                    "shared-tag article must rank before same-category article"
+        finally:
+            for x in (a, b, c):
+                owner_session.delete(f"{API}/articles/{x['id']}", timeout=10)
+
+    def test_related_fallback_to_category(self, api_client, owner_session):
+        # Article with tags that no one else shares — fallback to same category
+        uniq = uuid.uuid4().hex[:6]
+        payload_src = {
+            "category_slug": "tutorial-coding",
+            "tags": [f"unique{uniq}"],
+            "cover_image": "",
+            "ads_enabled": False,
+            "featured": False,
+            "status": "published",
+            "content_id": {
+                "title": f"TEST_FBCK_{uniq}",
+                "slug": f"test-fbck-id-{uniq}",
+                "excerpt": "e", "body_md": "b", "meta_description": "m",
+            },
+            "content_en": {
+                "title": f"TEST_FBCK_{uniq}_EN",
+                "slug": f"test-fbck-en-{uniq}",
+                "excerpt": "e", "body_md": "b", "meta_description": "m",
+            },
+        }
+        src = owner_session.post(f"{API}/articles", json=payload_src, timeout=10).json()
+        try:
+            rel = api_client.get(f"{API}/articles/{src['id']}/related?lang=id", timeout=10)
+            assert rel.status_code == 200
+            data = rel.json()
+            # Should return category fallback articles (excluding source)
+            assert all(x["id"] != src["id"] for x in data)
+        finally:
+            owner_session.delete(f"{API}/articles/{src['id']}", timeout=10)
+
+    def test_related_nonexistent_article_returns_404(self, api_client):
+        r = api_client.get(f"{API}/articles/nonexistent-xyz-123/related", timeout=10)
+        assert r.status_code == 404

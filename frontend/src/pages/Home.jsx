@@ -13,9 +13,12 @@ const PILLARS = [
     { slug: "tools-review", id: "Review Tools", en: "Tools Review", desc_id: "Ulasan tools developer", desc_en: "Dev tool reviews" },
     { slug: "developer-finance", id: "Finansial Dev", en: "Dev Finance", desc_id: "Kelola keuangan dev", desc_en: "Manage dev money" },
     { slug: "ai-prompt", id: "AI & Prompt", en: "AI & Prompts", desc_id: "AI untuk developer", desc_en: "AI for developers" },
+    { slug: "ai-agents", id: "AI Agents", en: "AI Agents", desc_id: "Bangun agent otonom", desc_en: "Build autonomous agents" },
     { slug: "career-interview", id: "Karir & Interview", en: "Career", desc_id: "Naik level karir", desc_en: "Level up your career" },
     { slug: "nocode-lowcode", id: "No-Code", en: "No-Code", desc_id: "Bangun tanpa koding", desc_en: "Build without code" },
     { slug: "saas-indie", id: "SaaS & Indie", en: "SaaS & Indie", desc_id: "Journey indie hacker", desc_en: "Indie hacker journey" },
+    { slug: "blockchain-crypto", id: "Blockchain & Crypto", en: "Blockchain & Crypto", desc_id: "Web3, smart contracts, DeFi", desc_en: "Web3, smart contracts, DeFi" },
+    { slug: "trading", id: "Trading", en: "Trading", desc_id: "Stock, Crypto, Forex", desc_en: "Stock, Crypto, Forex" },
 ];
 
 export default function Home() {
@@ -113,7 +116,7 @@ export default function Home() {
                     <div className="flex items-center gap-2">
                         <Zap className="h-4 w-4 text-[hsl(var(--accent))]" />
                         <h2 className="font-heading text-sm font-bold uppercase tracking-widest">
-                            {t("8 Pilar Konten", "8 Content Pillars")}
+                            {t("11 Pilar Konten", "11 Content Pillars")}
                         </h2>
                     </div>
                 </div>

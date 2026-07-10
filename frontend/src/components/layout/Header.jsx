@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/button";
 
 const CATEGORIES = [
     { slug: "tutorial-coding", id: "Tutorial", en: "Tutorial" },
-    { slug: "error-solutions", id: "Fix Error", en: "Fix Error" },
     { slug: "ai-prompt", id: "AI & Prompt", en: "AI & Prompt" },
+    { slug: "ai-agents", id: "AI Agents", en: "AI Agents" },
+    { slug: "blockchain-crypto", id: "Crypto", en: "Crypto" },
+    { slug: "trading", id: "Trading", en: "Trading" },
     { slug: "saas-indie", id: "SaaS", en: "SaaS" },
-    { slug: "career-interview", id: "Karir", en: "Career" },
 ];
 
 export default function Header() {

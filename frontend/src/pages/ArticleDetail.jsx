@@ -6,6 +6,7 @@ import MarkdownRenderer from "@/components/MarkdownRenderer";
 import StickyTOC from "@/components/StickyTOC";
 import ReadingProgress from "@/components/ReadingProgress";
 import CommentSection from "@/components/CommentSection";
+import RelatedArticles from "@/components/RelatedArticles";
 import NewsletterForm from "@/components/NewsletterForm";
 import AdSlot from "@/components/AdSlot";
 import { Clock, Eye, ArrowLeft, Twitter, Linkedin, Link as LinkIcon, Check } from "lucide-react";
@@ -175,6 +176,10 @@ export default function ArticleDetail() {
                     </div>
 
                     <StickyTOC content={content.body_md} />
+                </div>
+
+                <div className="max-w-3xl">
+                    <RelatedArticles articleId={article.id} />
                 </div>
             </article>
         </>

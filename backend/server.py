@@ -51,10 +51,6 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-# In-memory view throttle cache: {"ip:article_id": last_view_ts}
-_VIEW_CACHE: dict[str, float] = {}
-
-
 def _strip_id(doc):
     if doc and "_id" in doc:
         doc.pop("_id", None)
@@ -120,10 +116,110 @@ async def me(user: dict = Depends(current_user)):
 
 
 @api.post("/auth/refresh")
-async def refresh_token(request_response: Response, request=Depends()):
-    # simple: read cookie via header dependency
-    from fastapi import Request as _Req  # noqa
-    raise HTTPException(status_code=501, detail="Not implemented")
+async def refresh_token(request: Request, response: Response):
+    """Rotate refresh + access tokens. Reads refresh_token cookie or JSON body."""
+    token = request.cookies.get("refresh_token")
+    if not token:
+        try:
+            data = await request.json()
+            token = data.get("refresh_token")
+        except Exception:
+            token = None
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing refresh token")
+    try:
+        payload = decode_token(token)
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Not a refresh token")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+
+    user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    # Enforce single-use rotation: check jti-like blacklist by hashing token
+    import hashlib
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    if await db.revoked_tokens.find_one({"hash": token_hash}):
+        raise HTTPException(status_code=401, detail="Refresh token already used")
+    await db.revoked_tokens.insert_one({
+        "hash": token_hash,
+        "user_id": user["id"],
+        "created_at": datetime.now(timezone.utc),
+    })
+
+    new_access = create_access_token(user["id"], user["email"], user["role"])
+    new_refresh = create_refresh_token(user["id"])
+    set_auth_cookies(response, new_access, new_refresh)
+    return {"success": True, "user": {k: v for k, v in user.items() if k != "password_hash"}}
+
+
+# ================== EMERGENT GOOGLE AUTH ==================
+# REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+class EmergentSessionRequest(BaseModel):
+    session_id: str
+
+
+@api.post("/auth/emergent/session")
+async def emergent_session(body: EmergentSessionRequest, response: Response):
+    """Exchange an Emergent session_id for our JWT cookies.
+    Upserts the user in our `users` collection so both Google and JWT paths share the same schema.
+    """
+    import requests as _rq
+    try:
+        emergent_resp = _rq.get(
+            "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+            headers={"X-Session-ID": body.session_id},
+            timeout=10,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Emergent auth unreachable: {e}")
+    if emergent_resp.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid or expired session_id")
+    data = emergent_resp.json()
+    email = (data.get("email") or "").lower()
+    name = data.get("name") or (email.split("@")[0] if email else "Google User")
+    picture = data.get("picture") or ""
+    if not email:
+        raise HTTPException(status_code=400, detail="Emergent session missing email")
+
+    # Upsert user
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+    if user:
+        # update picture if not set
+        updates = {}
+        if picture and not user.get("avatar_url"):
+            updates["avatar_url"] = picture
+        if updates:
+            await db.users.update_one({"id": user["id"]}, {"$set": updates})
+            user.update(updates)
+    else:
+        base_slug = slugify(name) or f"user-{uuid.uuid4().hex[:6]}"
+        slug = base_slug
+        if await db.users.find_one({"slug": slug}):
+            slug = f"{base_slug}-{uuid.uuid4().hex[:4]}"
+        user = {
+            "id": str(uuid.uuid4()),
+            "email": email,
+            "password_hash": "",  # OAuth users have no password
+            "name": name,
+            "slug": slug,
+            "role": "author",
+            "bio": "",
+            "avatar_url": picture,
+            "twitter": "",
+            "github": "",
+            "website": "",
+            "created_at": now_iso(),
+            "provider": "google",
+        }
+        await db.users.insert_one({**user})
+
+    access = create_access_token(user["id"], user["email"], user["role"])
+    refresh = create_refresh_token(user["id"])
+    set_auth_cookies(response, access, refresh)
+    return {k: v for k, v in user.items() if k not in ("password_hash", "_id")}
 
 
 # ================== CATEGORIES ==================
@@ -206,15 +302,65 @@ async def get_article(slug: str, request: Request, lang: str = Query("id")):
         article = await db.articles.find_one({f"content_{other}.slug": slug}, {"_id": 0})
         if not article:
             raise HTTPException(status_code=404, detail="Article not found")
-    # increment views with per-ip throttling (1 view per article per 30 min)
-    client_ip = (request.client.host if request.client else "unknown") + ":" + article["id"]
-    now_ts = datetime.now(timezone.utc).timestamp()
-    last = _VIEW_CACHE.get(client_ip, 0)
-    if now_ts - last > 1800:
-        _VIEW_CACHE[client_ip] = now_ts
+    # increment views with Mongo-backed per-ip throttling (30 min TTL)
+    client_ip = request.client.host if request.client else "unknown"
+    view_key = f"{client_ip}:{article['id']}"
+    try:
+        # Try to insert a unique record; success means "new view" — TTL index will expire it in 30 min
+        await db.article_views.insert_one({
+            "key": view_key,
+            "article_id": article["id"],
+            "ip": client_ip,
+            "created_at": datetime.now(timezone.utc),
+        })
         await db.articles.update_one({"id": article["id"]}, {"$inc": {"views": 1}})
         article["views"] = article.get("views", 0) + 1
+    except Exception:
+        # duplicate within TTL window — do not increment
+        pass
     return article
+
+
+@api.get("/articles/{article_id}/related")
+async def get_related_articles(article_id: str, lang: str = "id", limit: int = 3):
+    """Related articles — shared tags first, fallback same category."""
+    article = await db.articles.find_one({"id": article_id}, {"_id": 0})
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    tags = article.get("tags", []) or []
+    category = article.get("category_slug")
+    result: list = []
+    seen = {article_id}
+    if tags:
+        cursor = db.articles.find(
+            {
+                "status": "published",
+                "id": {"$ne": article_id},
+                "tags": {"$in": tags},
+            },
+            {"_id": 0},
+        ).sort("published_at", -1).limit(limit * 2)
+        candidates = await cursor.to_list(limit * 2)
+        # Rank by number of shared tags
+        candidates.sort(key=lambda a: len(set(a.get("tags", [])) & set(tags)), reverse=True)
+        for a in candidates:
+            if a["id"] not in seen:
+                result.append(a)
+                seen.add(a["id"])
+                if len(result) >= limit:
+                    break
+    if len(result) < limit and category:
+        need = limit - len(result)
+        cursor = db.articles.find(
+            {
+                "status": "published",
+                "category_slug": category,
+                "id": {"$nin": list(seen)},
+            },
+            {"_id": 0},
+        ).sort("published_at", -1).limit(need)
+        result.extend(await cursor.to_list(need))
+    return result[:limit]
 
 
 @api.get("/articles/{article_id}/siblings")
@@ -701,6 +847,15 @@ async def startup():
     await db.subscribers.create_index("email", unique=True)
     await db.invites.create_index("token", unique=True)
     await db.invites.create_index("email")
+    # TTL for article view dedup: expires 30 min after created_at
+    await db.article_views.create_index("key", unique=True)
+    await db.article_views.create_index("created_at", expireAfterSeconds=1800)
+    # TTL for refresh-token revocation list: 30 days
+    await db.revoked_tokens.create_index("hash", unique=True)
+    await db.revoked_tokens.create_index(
+        "created_at",
+        expireAfterSeconds=30 * 24 * 3600,
+    )
     # object storage init (non-fatal)
     try:
         init_storage()

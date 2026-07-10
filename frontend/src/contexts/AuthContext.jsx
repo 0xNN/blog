@@ -8,6 +8,11 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     const fetchMe = useCallback(async () => {
+        // Skip /me check while returning from OAuth — AuthCallback will handle it
+        if (typeof window !== "undefined" && window.location.hash?.includes("session_id=")) {
+            setLoading(false);
+            return;
+        }
         try {
             const { data } = await api.get("/auth/me");
             setUser(data);

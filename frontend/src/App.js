@@ -18,6 +18,7 @@ import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
 import EditorPage from "@/pages/EditorPage";
 import AcceptInvite from "@/pages/AcceptInvite";
+import AuthCallback from "@/pages/AuthCallback";
 import NotFound from "@/pages/NotFound";
 
 import "@/index.css";
@@ -41,6 +42,7 @@ function AppShell() {
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="editor/:id" element={<EditorPage />} />
                     <Route path="invite/:token" element={<AcceptInvite />} />
+                    <Route path="auth/callback" element={<AuthCallback />} />
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </main>

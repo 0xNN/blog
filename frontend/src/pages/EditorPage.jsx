@@ -1,15 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "@/lib/api";
 import slugify from "slugify";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
-import { Save, Eye, Sparkles, Image as ImageIcon, Languages } from "lucide-react";
+import { Save, Eye, Sparkles, Image as ImageIcon, Languages, CheckCircle2 } from "lucide-react";
 
 const CATEGORIES = [
     "tutorial-coding", "error-solutions", "tools-review", "developer-finance",
-    "ai-prompt", "career-interview", "nocode-lowcode", "saas-indie",
+    "ai-prompt", "ai-agents", "career-interview", "nocode-lowcode",
+    "saas-indie", "blockchain-crypto", "trading",
 ];
 
 const empty = { title: "", slug: "", excerpt: "", body_md: "", meta_description: "" };
@@ -26,6 +27,10 @@ export default function EditorPage() {
     const [saving, setSaving] = useState(false);
     const [aiLoading, setAiLoading] = useState(false);
     const [error, setError] = useState("");
+    const [autoSavedAt, setAutoSavedAt] = useState(null);
+    const autosaveTimer = useRef(null);
+    const hasChanges = useRef(false);
+    const isMounted = useRef(false);
 
     const [meta, setMeta] = useState({
         category_slug: "tutorial-coding",
@@ -84,7 +89,25 @@ export default function EditorPage() {
             [field]: value,
             slug: field === "title" && !c.slug ? slugify(value, { lower: true, strict: true }) : c.slug,
         }));
+        hasChanges.current = true;
     };
+
+    // Autosave: 5s after typing stops. Skip for brand-new (no id yet, needs title) articles.
+    useEffect(() => {
+        if (!isMounted.current) { isMounted.current = true; return; }
+        if (!hasChanges.current) return;
+        if (isNew && !contentId.title && !contentEn.title) return;
+        if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = setTimeout(async () => {
+            try {
+                await save(false, { silent: true });
+                setAutoSavedAt(new Date());
+                hasChanges.current = false;
+            } catch { /* silently ignore */ }
+        }, 5000);
+        return () => autosaveTimer.current && clearTimeout(autosaveTimer.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [contentId, contentEn, meta]);
 
     const buildContent = (c) => {
         if (!c.title.trim()) return null;
@@ -126,10 +149,13 @@ export default function EditorPage() {
                 saved = r.data;
             }
             setMeta((m) => ({ ...m, status: saved.status }));
+            hasChanges.current = false;
+            if (silent) setAutoSavedAt(new Date());
         } catch (err) {
             setError(err?.response?.data?.detail || err.message);
+            if (silent) throw err;
         } finally {
-            setSaving(false);
+            if (!silent) setSaving(false);
         }
     };
 
@@ -194,6 +220,12 @@ export default function EditorPage() {
                     </button>
                 </div>
                 <div className="flex items-center gap-2">
+                    {autoSavedAt && (
+                        <span data-testid="editor-autosaved" className="inline-flex items-center gap-1 text-xs font-mono text-muted-foreground">
+                            <CheckCircle2 className="h-3 w-3 text-[hsl(var(--accent))]" />
+                            {t("Tersimpan", "Saved")} {autoSavedAt.toLocaleTimeString()}
+                        </span>
+                    )}
                     <button data-testid="editor-save-draft" onClick={() => save(false)} disabled={saving} className="rounded-full border border-border px-4 py-2 text-sm font-semibold hover:border-[hsl(var(--accent))] disabled:opacity-60 inline-flex items-center gap-1.5">
                         <Save className="h-3.5 w-3.5" /> {saving ? "…" : t("Simpan draft", "Save draft")}
                     </button>

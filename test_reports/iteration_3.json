@@ -1,0 +1,48 @@
+{
+  "summary": "Iteration-3 delta verified. Backend: 60/60 pytest cases pass (11 categories, refresh-token rotation w/ single-use enforcement, emergent/session 401 structural, related articles tag→category fallback, view throttling via Mongo TTL, subscribe/invite still 2xx even when Resend returns free-tier 403). New Mongo TTL indexes verified via pymongo (article_views: 1800s, revoked_tokens: 2592000s). Frontend: 11 pillar cards on /id incl. new categories, header nav shows AI Agents/Crypto/Trading, Google login buttons render on /id/login & /id/register, /id/auth/callback without session_id redirects to /id/login, RelatedArticles renders on article page. CRITICAL BUG FOUND in EditorPage.jsx: undefined variable `silent` throws ReferenceError, blocking Save Draft, Publish, and the autosave badge (although POST /articles does succeed and the URL updates to /id/editor/{new_id}).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "EditorPage.jsx (save function)",
+        "issue": "ReferenceError: `silent is not defined` thrown from lines 153 (`if (silent) setAutoSavedAt(new Date())`), 156 (`if (silent) throw err`), and 158 (`if (!silent) setSaving(false)`). The autosave useEffect calls `save(false, { silent: true })` — passing a second argument that the `save` function signature does NOT accept (`const save = async (publish = false) => ...`). The variable `silent` is never destructured or declared. Effects: (a) autosave badge [data-testid=\"editor-autosaved\"] NEVER appears; (b) manual [data-testid=\"editor-save-draft\"] click surfaces CRA red-overlay 'Uncaught runtime errors: silent is not defined'; (c) same for [data-testid=\"editor-publish\"]; (d) `setSaving(false)` in finally throws, leaving the save button in a disabled/loading-like state. The underlying POST /articles DOES succeed (article persists, URL updates to /id/editor/{new_id}), but the UI state is broken.",
+        "selector": "[data-testid='editor-autosaved'] (missing) / [data-testid='editor-error'] shows 'silent is not defined'",
+        "priority": "CRITICAL",
+        "fix_suggestion": "Change signature to `const save = async (publish = false, opts = {}) => { const { silent = false } = opts; ...` OR remove all three `silent`-guarded branches if autosave should not use the shared save() at all."
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "HIGH: Fix EditorPage.jsx — the `save()` function references an undefined `silent` variable. Recommended patch: change signature to `const save = async (publish = false, opts = {}) => { const { silent = false } = opts; ...`. Without this fix, Save Draft, Publish, and the autosave badge are all broken and the CRA dev overlay covers the whole editor after each click.",
+    "OPTIONAL: The `save` function also has divergent behavior between manual and autosave paths. Consider extracting autosave into its own function that reuses the shared build/post logic, to avoid the silent-flag anti-pattern entirely."
+  ],
+  "critical_code_review_comments": [
+    "EditorPage.jsx save(): critical undefined-variable bug (details in frontend_issues).",
+    "EditorPage.jsx autosave useEffect calls `save(false, { silent: true })` but the function signature is `save = async (publish = false)` — the second arg is silently dropped. This is the root cause of the ReferenceError.",
+    "server.py `/auth/emergent/session`: uses blocking `requests.get` inside an async handler. Fine for low volume; consider `httpx.AsyncClient` for concurrency. Not a bug, just a note.",
+    "server.py refresh_token rotation: correctly uses SHA-256 hash for the revocation list keyed by cookie value + TTL (30d) — this is the right design and reuse of an old token returns 401 as required. Verified via pytest.",
+    "server.py get_article view throttling: Mongo TTL migration is correct (unique index on `key` + TTL on `created_at`). Verified: 5 rapid hits from same IP increment views by exactly 1.",
+    "email_service.py: catches Resend errors as warnings — subscribe/invite endpoints still return 201, and the response includes `email.status='error'` when Resend rejects the free-tier recipient. Handled gracefully.",
+    "AuthCallback.jsx: hash detection uses `useRef` set during render (before `useEffect`) to guard against re-processing — correct pattern per the playbook. Redirects to /login when no session_id fragment is present.",
+    "RelatedArticles.jsx returns null when the API list is empty; the section [data-testid='related-articles'] simply doesn't render — this is expected behavior. Verified on article with 1 related item."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (added: TestCategories.test_new_categories_present; TestRefreshRotation (3 tests: missing cookie 401, rotate+reuse-fails, invalid token 401); TestEmergentSession (2 tests: invalid session_id 401, missing body 422); TestRelatedArticles (4 tests: up-to-3+excludes-source, prefers-shared-tags, fallback-to-category, 404 on missing article); updated TestCategories to expect 11 categories, updated invite test to accept sent/error/skipped, updated SubscribeNoop assertions)."
+  ],
+  "success_rate": {"backend": "100% (60/60)", "frontend": "83% (5/6 verified flows pass; editor autosave/save/publish broken by ReferenceError)"},
+  "test_credentials": "admin@devhub.io / Admin123! (owner), author@devhub.io / Author123! (author), editor@devhub.io / Editor123! (editor). All still valid.",
+  "seed_data_creation": "Tests create TEST_-prefixed articles/users/comments/invites and clean up after each test. One TEST_ Manual Save + one TEST_ Autosave draft article were left in DB from the frontend playwright tests (visible in dashboard). Consider cleaning up if noise matters.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend suite (/app/backend/tests/backend_test.py) has 60 tests running in ~10s with 2 workers via pytest.ini. New iteration-3 endpoints all covered: /api/auth/refresh (rotation+reuse-401), /api/auth/emergent/session (invalid 401/missing 422), /api/articles/{id}/related (tag→category fallback), 11 categories, view throttling via Mongo TTL (verified via first-hit vs subsequent hits diff <=1). Mongo indexes verified via `pymongo.article_views.index_information()` — TTL on created_at is 1800s (30min) as required. FRONTEND: editor autosave/save/publish is BROKEN by ReferenceError('silent is not defined') at EditorPage.jsx lines 153/156/158. Main agent must fix the `save` function signature (destructure a second `opts` argument) before autosave can be revalidated. Everything else on the frontend delta (pillars, header, google buttons, callback, related) works.",
+  "rca of the issue": "Bug: EditorPage.jsx save() references undefined `silent` variable. Root cause: incomplete refactor. Line 96-110 introduces the autosave useEffect which calls `save(false, { silent: true })` intending to pass an options object with `silent`. However the `save` function (line 123) still uses the old signature `async (publish = false)` and never destructures `opts`, so `silent` remains an undefined identifier in scope. The first reference (line 153 `if (silent) setAutoSavedAt(new Date())`) throws ReferenceError inside the try, gets caught, sets `error.message = 'silent is not defined'` on the banner, then the catch line 156 (`if (silent) throw err`) throws ReferenceError again, then the finally line 158 (`if (!silent) setSaving(false)`) throws ReferenceError which propagates OUT of save() and shows CRA's Uncaught runtime error overlay. Reproduction: log in as author, go to /id/editor/new, type any title+body, click 'Simpan draft' — red overlay 'silent is not defined' appears. Mitigation (NOT applied — business logic, main agent's job): change `save = async (publish = false)` to `save = async (publish = false, opts = {}) => { const { silent = false } = opts; ...` in /app/frontend/src/pages/EditorPage.jsx line 123."
+}

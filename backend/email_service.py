@@ -39,7 +39,8 @@ async def send_email(to: str, subject: str, html: str, sender: Optional[str] = N
         result = await asyncio.to_thread(resend.Emails.send, params)
         return {"status": "sent", "id": result.get("id") if isinstance(result, dict) else None}
     except Exception as e:
-        logger.exception("Resend send failed")
+        # e.g. Resend free-tier restriction to sender's email — log but never break flow
+        logger.warning(f"Resend send failed: {e}")
         return {"status": "error", "error": str(e)}
 
 

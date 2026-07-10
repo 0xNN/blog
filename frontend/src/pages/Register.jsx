@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth, formatApiError } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { PenSquare } from "lucide-react";
+import GoogleLoginButton from "@/components/GoogleLoginButton";
 
 export default function Register() {
     const { register } = useAuth();
@@ -36,6 +37,15 @@ export default function Register() {
                 </div>
                 <h1 className="font-heading text-4xl font-black tracking-tight">{t("Jadi Kontributor", "Become a contributor")}</h1>
                 <p className="text-muted-foreground font-body mt-2">{t("Bagikan pengetahuan kamu dengan komunitas developer.", "Share your knowledge with the dev community.")}</p>
+            </div>
+
+            <div className="mb-6">
+                <GoogleLoginButton testId="register-google-btn" />
+                <div className="my-6 flex items-center gap-3 text-xs font-mono uppercase tracking-widest text-muted-foreground">
+                    <div className="flex-1 h-px bg-border" />
+                    {t("atau", "or")}
+                    <div className="flex-1 h-px bg-border" />
+                </div>
             </div>
 
             <form onSubmit={submit} className="space-y-4">

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth, formatApiError } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { LogIn } from "lucide-react";
+import GoogleLoginButton from "@/components/GoogleLoginButton";
 
 export default function Login() {
     const { login } = useAuth();
@@ -35,6 +36,15 @@ export default function Login() {
                 </div>
                 <h1 className="font-heading text-4xl font-black tracking-tight">{t("Masuk", "Welcome back")}</h1>
                 <p className="text-muted-foreground font-body mt-2">{t("Lanjutkan menulis atau baca artikel eksklusif.", "Keep writing or read exclusive stories.")}</p>
+            </div>
+
+            <div className="mb-6">
+                <GoogleLoginButton testId="login-google-btn" />
+                <div className="my-6 flex items-center gap-3 text-xs font-mono uppercase tracking-widest text-muted-foreground">
+                    <div className="flex-1 h-px bg-border" />
+                    {t("atau", "or")}
+                    <div className="flex-1 h-px bg-border" />
+                </div>
             </div>
 
             <form onSubmit={submit} className="space-y-4">
