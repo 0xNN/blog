@@ -1,6 +1,7 @@
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate, useMatch } from "react-router-dom";
 import { Moon, Sun, Menu, X, Search, PenSquare, LogOut, Layout } from "lucide-react";
 import { useState } from "react";
+import api from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,10 +24,32 @@ export default function Header() {
     const loc = useLocation();
 
     const langPrefix = `/${lang}`;
+    const articleMatch = useMatch(`/${lang}/blog/:slug`);
+    const currentArticleSlug = articleMatch?.params?.slug;
 
-    const handleLangSwitch = (newLang) => {
+    const handleLangSwitch = async (newLang) => {
+        if (newLang === lang) return;
         setLang(newLang);
-        // switch URL prefix
+
+        // If we're on an article page, try to map to the translated slug
+        if (currentArticleSlug) {
+            try {
+                // Load the article (with fallback across languages) to get its ID
+                const { data: article } = await api.get(
+                    `/articles/${currentArticleSlug}?lang=${lang}`
+                );
+                const { data: siblings } = await api.get(`/articles/${article.id}/siblings`);
+                const targetSlug = newLang === "id" ? siblings.id_slug : siblings.en_slug;
+                if (targetSlug) {
+                    nav(`/${newLang}/blog/${targetSlug}`);
+                    return;
+                }
+            } catch {
+                /* fall through to naive path swap */
+            }
+        }
+
+        // Default: swap the URL prefix
         const path = loc.pathname.replace(/^\/(id|en)(\/|$)/, `/${newLang}$2`);
         nav(path || `/${newLang}`);
     };

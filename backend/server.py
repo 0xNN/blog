@@ -11,11 +11,11 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional, List
 
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, Response, UploadFile, File, Query, Header
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, Response, UploadFile, File, Query, Header, Request
 from fastapi.responses import Response as FastResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 import slugify as _slug_mod
 
 from models import (
@@ -29,6 +29,7 @@ from auth import (
 )
 from storage import init_storage, put_object, get_object, APP_NAME
 from ai_service import ai_generate
+from email_service import send_newsletter_welcome, send_author_invite
 from seed_data import run_seed
 
 
@@ -48,6 +49,10 @@ def slugify(text: str) -> str:
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+# In-memory view throttle cache: {"ip:article_id": last_view_ts}
+_VIEW_CACHE: dict[str, float] = {}
 
 
 def _strip_id(doc):
@@ -190,7 +195,7 @@ async def popular_articles(lang: str = "id", limit: int = 6):
 
 
 @api.get("/articles/{slug}")
-async def get_article(slug: str, lang: str = Query("id")):
+async def get_article(slug: str, request: Request, lang: str = Query("id")):
     content_field = f"content_{lang}"
     article = await db.articles.find_one(
         {f"{content_field}.slug": slug}, {"_id": 0}
@@ -201,10 +206,27 @@ async def get_article(slug: str, lang: str = Query("id")):
         article = await db.articles.find_one({f"content_{other}.slug": slug}, {"_id": 0})
         if not article:
             raise HTTPException(status_code=404, detail="Article not found")
-    # increment views
-    await db.articles.update_one({"id": article["id"]}, {"$inc": {"views": 1}})
-    article["views"] = article.get("views", 0) + 1
+    # increment views with per-ip throttling (1 view per article per 30 min)
+    client_ip = (request.client.host if request.client else "unknown") + ":" + article["id"]
+    now_ts = datetime.now(timezone.utc).timestamp()
+    last = _VIEW_CACHE.get(client_ip, 0)
+    if now_ts - last > 1800:
+        _VIEW_CACHE[client_ip] = now_ts
+        await db.articles.update_one({"id": article["id"]}, {"$inc": {"views": 1}})
+        article["views"] = article.get("views", 0) + 1
     return article
+
+
+@api.get("/articles/{article_id}/siblings")
+async def get_article_siblings(article_id: str):
+    """Return slugs for both languages for lang-switching."""
+    article = await db.articles.find_one({"id": article_id}, {"_id": 0, "content_id.slug": 1, "content_en.slug": 1})
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    return {
+        "id_slug": article.get("content_id", {}).get("slug") if article.get("content_id") else None,
+        "en_slug": article.get("content_en", {}).get("slug") if article.get("content_en") else None,
+    }
 
 
 @api.post("/articles", status_code=201)
@@ -328,6 +350,33 @@ async def delete_comment(comment_id: str, user: dict = Depends(current_user)):
     return {"success": True}
 
 
+@api.get("/admin/comments")
+async def admin_list_comments(
+    status: Optional[str] = None,
+    limit: int = Query(200, le=500),
+    user: dict = Depends(require_role("owner", "editor")),
+):
+    q = {}
+    if status:
+        q["status"] = status
+    comments = await db.comments.find(q, {"_id": 0}).sort("created_at", -1).limit(limit).to_list(limit)
+    return comments
+
+
+class CommentStatusUpdate(BaseModel):
+    status: str  # approved | spam | pending
+
+
+@api.patch("/admin/comments/{comment_id}")
+async def moderate_comment(comment_id: str, body: CommentStatusUpdate, user: dict = Depends(require_role("owner", "editor"))):
+    if body.status not in ("approved", "spam", "pending"):
+        raise HTTPException(status_code=400, detail="Invalid status")
+    result = await db.comments.update_one({"id": comment_id}, {"$set": {"status": body.status}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return {"success": True}
+
+
 # ================== SUBSCRIBERS ==================
 @api.post("/subscribe", status_code=201)
 async def subscribe(body: SubscribeIn):
@@ -342,13 +391,123 @@ async def subscribe(body: SubscribeIn):
         "created_at": now_iso(),
     }
     await db.subscribers.insert_one(doc)
+    # Fire-and-forget welcome email (no-op if Resend not configured)
+    try:
+        await send_newsletter_welcome(email)
+    except Exception as e:
+        logger.warning(f"Newsletter welcome email failed: {e}")
     return {"success": True, "message": "Subscribed"}
 
 
 @api.get("/subscribers")
-async def list_subscribers(user: dict = Depends(require_role("owner", "editor"))):
+async def list_subscribers_admin(user: dict = Depends(require_role("owner", "editor"))):
     subs = await db.subscribers.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return subs
+
+
+# ================== INVITES ==================
+class InviteCreate(BaseModel):
+    email: EmailStr
+    name: str
+    role: str = "author"  # author | editor
+
+
+class InviteAccept(BaseModel):
+    password: str
+
+
+@api.post("/invites", status_code=201)
+async def create_invite(body: InviteCreate, request: Request, user: dict = Depends(require_role("owner", "editor"))):
+    if body.role not in ("author", "editor"):
+        raise HTTPException(status_code=400, detail="Invalid role")
+    email = body.email.lower()
+    # Check if already a user
+    if await db.users.find_one({"email": email}):
+        raise HTTPException(status_code=400, detail="A user with this email already exists")
+    token = uuid.uuid4().hex + uuid.uuid4().hex  # 64 chars
+    from datetime import timedelta
+    expires_at = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+    doc = {
+        "id": str(uuid.uuid4()),
+        "token": token,
+        "email": email,
+        "name": body.name,
+        "role": body.role,
+        "invited_by": user["name"],
+        "invited_by_id": user["id"],
+        "status": "pending",
+        "expires_at": expires_at,
+        "created_at": now_iso(),
+    }
+    await db.invites.insert_one(doc)
+    frontend = os.environ.get("FRONTEND_URL", "").rstrip("/")
+    accept_url = f"{frontend}/id/invite/{token}"
+    email_result = await send_author_invite(email, user["name"], accept_url)
+    return {"success": True, "invite_id": doc["id"], "accept_url": accept_url, "email": email_result}
+
+
+@api.get("/invites")
+async def list_invites(user: dict = Depends(require_role("owner", "editor"))):
+    invites = await db.invites.find({}, {"_id": 0, "token": 0}).sort("created_at", -1).to_list(200)
+    return invites
+
+
+@api.delete("/invites/{invite_id}")
+async def revoke_invite(invite_id: str, user: dict = Depends(require_role("owner", "editor"))):
+    result = await db.invites.delete_one({"id": invite_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    return {"success": True}
+
+
+@api.get("/invites/token/{token}")
+async def get_invite_by_token(token: str):
+    invite = await db.invites.find_one({"token": token}, {"_id": 0, "token": 0})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found or expired")
+    if invite["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Invite already used or revoked")
+    if datetime.fromisoformat(invite["expires_at"]) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Invite expired")
+    return {"email": invite["email"], "name": invite["name"], "role": invite["role"], "invited_by": invite["invited_by"]}
+
+
+@api.post("/invites/token/{token}/accept")
+async def accept_invite(token: str, body: InviteAccept, response: Response):
+    if len(body.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    invite = await db.invites.find_one({"token": token})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    if invite["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Invite already used")
+    if datetime.fromisoformat(invite["expires_at"]) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Invite expired")
+    if await db.users.find_one({"email": invite["email"]}):
+        raise HTTPException(status_code=400, detail="A user with this email already exists")
+    slug = slugify(invite["name"]) or f"user-{uuid.uuid4().hex[:6]}"
+    if await db.users.find_one({"slug": slug}):
+        slug = f"{slug}-{uuid.uuid4().hex[:4]}"
+    user = {
+        "id": str(uuid.uuid4()),
+        "email": invite["email"],
+        "password_hash": hash_password(body.password),
+        "name": invite["name"],
+        "slug": slug,
+        "role": invite["role"],
+        "bio": "",
+        "avatar_url": "",
+        "twitter": "",
+        "github": "",
+        "website": "",
+        "created_at": now_iso(),
+    }
+    await db.users.insert_one(user)
+    await db.invites.update_one({"token": token}, {"$set": {"status": "accepted", "accepted_at": now_iso()}})
+    access = create_access_token(user["id"], user["email"], user["role"])
+    refresh = create_refresh_token(user["id"])
+    set_auth_cookies(response, access, refresh)
+    return {k: v for k, v in user.items() if k not in ("password_hash", "_id")}
 
 
 # ================== ANALYTICS ==================
@@ -463,6 +622,45 @@ async def ads_txt():
                         media_type="text/plain")
 
 
+@api.get("/rss.xml")
+async def rss_feed(lang: str = "id"):
+    base = os.environ.get("FRONTEND_URL", "").rstrip("/")
+    articles = await db.articles.find(
+        {"status": "published"}, {"_id": 0}
+    ).sort("published_at", -1).limit(50).to_list(50)
+    site_title = "Developer Hub" + (" (Bahasa Indonesia)" if lang == "id" else "")
+    items: List[str] = []
+    for a in articles:
+        c = a.get(f"content_{lang}") or a.get("content_id") or a.get("content_en")
+        if not c or not c.get("slug"):
+            continue
+        title = (c["title"] or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        excerpt = (c.get("excerpt", "") or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        url = f"{base}/{lang}/blog/{c['slug']}"
+        pub = a.get("published_at", "")
+        items.append(
+            f"    <item>\n"
+            f"      <title>{title}</title>\n"
+            f"      <link>{url}</link>\n"
+            f"      <guid isPermaLink='true'>{url}</guid>\n"
+            f"      <pubDate>{pub}</pubDate>\n"
+            f"      <description>{excerpt}</description>\n"
+            f"      <author>{a.get('author_name', '')}</author>\n"
+            f"    </item>"
+        )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<rss version="2.0"><channel>\n'
+        f"  <title>{site_title}</title>\n"
+        f"  <link>{base}/{lang}</link>\n"
+        f"  <description>Bilingual blog for developers</description>\n"
+        f"  <language>{'id-ID' if lang == 'id' else 'en-US'}</language>\n"
+        + "\n".join(items)
+        + "\n</channel></rss>"
+    )
+    return FastResponse(content=xml, media_type="application/rss+xml")
+
+
 # ================== ROOT ==================
 @api.get("/")
 async def root():
@@ -471,24 +669,18 @@ async def root():
 
 app.include_router(api)
 
+# CORS: allow both wildcard (no credentials) for public API access and explicit
+# frontend origin (with credentials for cookie-based auth). Starlette picks the
+# first matching CORSMiddleware, so we install the credentialed one first.
+frontend_url = os.environ.get("FRONTEND_URL")
+allowed_origins = [frontend_url] if frontend_url else []
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,  # cannot combine * with credentials; frontend also sends via bearer
+    allow_origins=allowed_origins or ["*"],
+    allow_credentials=bool(frontend_url),
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Also allow credentials for explicit frontend origin
-frontend_url = os.environ.get("FRONTEND_URL")
-if frontend_url:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[frontend_url],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -507,6 +699,8 @@ async def startup():
     await db.articles.create_index("published_at")
     await db.comments.create_index("article_id")
     await db.subscribers.create_index("email", unique=True)
+    await db.invites.create_index("token", unique=True)
+    await db.invites.create_index("email")
     # object storage init (non-fatal)
     try:
         init_storage()

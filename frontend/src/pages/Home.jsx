@@ -5,6 +5,7 @@ import api from "@/lib/api";
 import { useLang } from "@/contexts/LanguageContext";
 import ArticleCard from "@/components/ArticleCard";
 import NewsletterForm from "@/components/NewsletterForm";
+import { PageSeo } from "@/components/Seo";
 
 const PILLARS = [
     { slug: "tutorial-coding", id: "Tutorial Coding", en: "Coding Tutorials", desc_id: "Panduan langkah demi langkah", desc_en: "Step-by-step guides" },
@@ -34,6 +35,14 @@ export default function Home() {
 
     return (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <PageSeo
+                lang={lang}
+                path={`/${lang}`}
+                title={lang === "id" ? "Blog Developer Bilingual (ID + EN)" : "The Bilingual Developer Blog"}
+                description={lang === "id"
+                    ? "Tutorial mendalam, solusi error real-world, dan cerita indie hacker untuk developer Indonesia & global."
+                    : "In-depth tutorials, real-world error fixes, and indie hacker stories for developers worldwide."}
+            />
             {/* Hero */}
             <section className="pt-16 pb-14 lg:pt-24 lg:pb-20 border-b border-border">
                 <div className="grid lg:grid-cols-12 gap-10 items-end">

@@ -130,13 +130,35 @@ class TestArticles:
         assert data["content_en"]["slug"] == slug
         assert "React" in data["content_en"]["title"]
 
-    def test_get_article_view_increments(self, api_client):
+    def test_get_article_view_throttled(self, api_client):
+        """With per-IP throttling (30 min), 5 rapid hits should increment views by at most 1."""
         slug = "menguasai-react-hooks-2026"
         r1 = api_client.get(f"{API}/articles/{slug}?lang=id", timeout=10)
         v1 = r1.json()["views"]
-        r2 = api_client.get(f"{API}/articles/{slug}?lang=id", timeout=10)
-        v2 = r2.json()["views"]
-        assert v2 > v1
+        for _ in range(4):
+            api_client.get(f"{API}/articles/{slug}?lang=id", timeout=10)
+        r_final = api_client.get(f"{API}/articles/{slug}?lang=id", timeout=10)
+        v_final = r_final.json()["views"]
+        # Should NOT go up by 5 — throttle allows only 1 within 30 min per IP+article
+        assert v_final - v1 <= 1, f"Throttling failed: views went from {v1} -> {v_final}"
+
+    def test_article_siblings(self, api_client):
+        # Fetch one seeded article, then hit /siblings
+        r = api_client.get(f"{API}/articles?lang=id", timeout=10)
+        assert r.status_code == 200
+        article = r.json()[0]
+        art_id = article["id"]
+        s = api_client.get(f"{API}/articles/{art_id}/siblings", timeout=10)
+        assert s.status_code == 200
+        data = s.json()
+        assert "id_slug" in data
+        assert "en_slug" in data
+        # For seed articles, both should be present
+        assert data["id_slug"] and data["en_slug"]
+
+    def test_article_siblings_404(self, api_client):
+        r = api_client.get(f"{API}/articles/nonexistent-id-xxx/siblings", timeout=10)
+        assert r.status_code == 404
 
 
 # ----------------------- Authors -----------------------
@@ -385,3 +407,217 @@ class TestAI:
         r = requests.post(f"{API}/ai/generate",
                           json={"mode": "draft", "prompt": "hi"}, timeout=10)
         assert r.status_code == 401
+
+
+# ----------------------- Invites (Iteration 2) -----------------------
+
+class TestInvites:
+    def test_create_invite_owner(self, owner_session):
+        email = f"TEST_invite_{uuid.uuid4().hex[:8]}@devhub.io"
+        payload = {"email": email, "name": f"TEST Invitee {uuid.uuid4().hex[:4]}", "role": "author"}
+        r = owner_session.post(f"{API}/invites", json=payload, timeout=15)
+        assert r.status_code == 201, r.text[:300]
+        data = r.json()
+        assert data["success"] is True
+        assert "invite_id" in data
+        assert "accept_url" in data and "/invite/" in data["accept_url"]
+        # Because RESEND_API_KEY empty, email must be skipped (no-op)
+        assert "email" in data
+        assert data["email"]["status"] == "skipped", f"expected skipped, got {data['email']}"
+        # cleanup
+        owner_session.delete(f"{API}/invites/{data['invite_id']}", timeout=10)
+
+    def test_list_invites_owner(self, owner_session):
+        # create one to guarantee non-empty
+        email = f"TEST_invlist_{uuid.uuid4().hex[:8]}@devhub.io"
+        c = owner_session.post(f"{API}/invites",
+                               json={"email": email, "name": "TEST InviteList", "role": "author"},
+                               timeout=15)
+        assert c.status_code == 201
+        inv_id = c.json()["invite_id"]
+        r = owner_session.get(f"{API}/invites", timeout=10)
+        assert r.status_code == 200
+        data = r.json()
+        assert isinstance(data, list)
+        ids = [x["id"] for x in data]
+        assert inv_id in ids
+        # token should NOT be exposed in list
+        for x in data:
+            assert "token" not in x
+        owner_session.delete(f"{API}/invites/{inv_id}", timeout=10)
+
+    def test_list_invites_author_forbidden(self, author_session):
+        r = author_session.get(f"{API}/invites", timeout=10)
+        assert r.status_code == 403
+
+    def test_create_invite_author_forbidden(self, author_session):
+        r = author_session.post(f"{API}/invites",
+                                json={"email": "TEST_bad@x.io", "name": "n", "role": "author"},
+                                timeout=10)
+        assert r.status_code == 403
+
+    def test_invalid_token_returns_404(self, api_client):
+        r = api_client.get(f"{API}/invites/token/not-a-real-token-xxx", timeout=10)
+        assert r.status_code == 404
+
+    def test_get_invite_by_token_success(self, owner_session):
+        # Create invite, then retrieve raw token from DB via a full accept flow.
+        # We don't have direct DB access here, but the create response returns accept_url
+        # containing the token — extract it.
+        email = f"TEST_inv_get_{uuid.uuid4().hex[:8]}@devhub.io"
+        name = f"TEST Get {uuid.uuid4().hex[:4]}"
+        c = owner_session.post(f"{API}/invites",
+                               json={"email": email, "name": name, "role": "author"},
+                               timeout=15)
+        assert c.status_code == 201
+        accept_url = c.json()["accept_url"]
+        token = accept_url.rstrip("/").split("/")[-1]
+        # Now GET the invite by token
+        r = requests.get(f"{API}/invites/token/{token}", timeout=10)
+        assert r.status_code == 200, r.text[:300]
+        data = r.json()
+        assert data["email"] == email.lower()  # backend normalizes to lowercase
+        assert data["name"] == name
+        assert data["role"] == "author"
+        assert "invited_by" in data
+        # cleanup
+        owner_session.delete(f"{API}/invites/{c.json()['invite_id']}", timeout=10)
+
+    def test_accept_invite_flow(self, owner_session):
+        email = f"TEST_inv_accept_{uuid.uuid4().hex[:8]}@devhub.io"
+        name = f"TEST Accept {uuid.uuid4().hex[:4]}"
+        c = owner_session.post(f"{API}/invites",
+                               json={"email": email, "name": name, "role": "author"},
+                               timeout=15)
+        assert c.status_code == 201
+        token = c.json()["accept_url"].rstrip("/").split("/")[-1]
+        s = requests.Session()
+        r = s.post(f"{API}/invites/token/{token}/accept",
+                   json={"password": "Passw0rd!"}, timeout=15)
+        assert r.status_code == 200, r.text[:300]
+        user = r.json()
+        assert user["email"] == email.lower()
+        assert user["role"] == "author"
+        assert "password_hash" not in user
+        assert "_id" not in user
+        # Auth cookies should be set on the session
+        assert "access_token" in s.cookies
+        # Second attempt should now fail (invite consumed)
+        r2 = s.post(f"{API}/invites/token/{token}/accept",
+                    json={"password": "Passw0rd!"}, timeout=10)
+        assert r2.status_code == 400
+        # Login as the new user should work
+        login = requests.post(f"{API}/auth/login",
+                              json={"email": email.lower(), "password": "Passw0rd!"}, timeout=10)
+        assert login.status_code == 200
+
+    def test_accept_invite_bad_token(self, api_client):
+        r = api_client.post(f"{API}/invites/token/does-not-exist/accept",
+                            json={"password": "Passw0rd!"}, timeout=10)
+        assert r.status_code == 404
+
+    def test_delete_invite_author_forbidden(self, owner_session, author_session):
+        email = f"TEST_inv_del_{uuid.uuid4().hex[:8]}@devhub.io"
+        c = owner_session.post(f"{API}/invites",
+                               json={"email": email, "name": "TEST Del", "role": "author"},
+                               timeout=15)
+        assert c.status_code == 201
+        inv_id = c.json()["invite_id"]
+        r = author_session.delete(f"{API}/invites/{inv_id}", timeout=10)
+        assert r.status_code == 403
+        # Owner deletes
+        d = owner_session.delete(f"{API}/invites/{inv_id}", timeout=10)
+        assert d.status_code == 200
+
+
+# ----------------------- Admin Comments moderation -----------------------
+
+class TestAdminComments:
+    def _get_article_id(self, api_client):
+        r = api_client.get(f"{API}/articles?lang=id", timeout=10)
+        assert r.status_code == 200
+        return r.json()[0]["id"]
+
+    def test_admin_list_comments_owner(self, owner_session):
+        r = owner_session.get(f"{API}/admin/comments", timeout=10)
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
+
+    def test_admin_list_comments_author_forbidden(self, author_session):
+        r = author_session.get(f"{API}/admin/comments", timeout=10)
+        assert r.status_code == 403
+
+    def test_moderate_comment_spam_hides_from_public(self, owner_session, author_session, api_client):
+        article_id = self._get_article_id(api_client)
+        c = author_session.post(f"{API}/comments",
+                                json={"article_id": article_id, "body": "TEST_ moderation candidate"},
+                                timeout=10)
+        assert c.status_code == 201
+        cid = c.json()["id"]
+        # Public list should include it initially
+        lst_before = api_client.get(f"{API}/comments/{article_id}", timeout=10).json()
+        assert any(x["id"] == cid for x in lst_before)
+        # Mark as spam
+        r = owner_session.patch(f"{API}/admin/comments/{cid}",
+                                json={"status": "spam"}, timeout=10)
+        assert r.status_code == 200
+        # Now public list should exclude it
+        lst_after = api_client.get(f"{API}/comments/{article_id}", timeout=10).json()
+        assert not any(x["id"] == cid for x in lst_after), \
+            "Spam-marked comment must not appear in public listing"
+        # Approve it back
+        r2 = owner_session.patch(f"{API}/admin/comments/{cid}",
+                                 json={"status": "approved"}, timeout=10)
+        assert r2.status_code == 200
+        lst_final = api_client.get(f"{API}/comments/{article_id}", timeout=10).json()
+        assert any(x["id"] == cid for x in lst_final)
+        # cleanup
+        author_session.delete(f"{API}/comments/{cid}", timeout=10)
+
+    def test_moderate_invalid_status(self, owner_session, author_session, api_client):
+        article_id = self._get_article_id(api_client)
+        c = author_session.post(f"{API}/comments",
+                                json={"article_id": article_id, "body": "TEST_ bad status"},
+                                timeout=10)
+        cid = c.json()["id"]
+        r = owner_session.patch(f"{API}/admin/comments/{cid}",
+                                json={"status": "bogus"}, timeout=10)
+        assert r.status_code == 400
+        author_session.delete(f"{API}/comments/{cid}", timeout=10)
+
+    def test_moderate_not_found(self, owner_session):
+        r = owner_session.patch(f"{API}/admin/comments/nonexistent-id",
+                                json={"status": "approved"}, timeout=10)
+        assert r.status_code == 404
+
+
+# ----------------------- RSS Feed -----------------------
+
+class TestRSS:
+    def test_rss_id(self, api_client):
+        r = api_client.get(f"{API}/rss.xml?lang=id", timeout=10)
+        assert r.status_code == 200
+        assert "application/rss+xml" in r.headers.get("content-type", "")
+        body = r.text
+        assert "<rss" in body and "</rss>" in body
+        assert "<channel>" in body
+        assert "<language>id-ID</language>" in body
+        # Should include at least one seeded article
+        assert "<item>" in body
+
+    def test_rss_en(self, api_client):
+        r = api_client.get(f"{API}/rss.xml?lang=en", timeout=10)
+        assert r.status_code == 200
+        assert "<language>en-US</language>" in r.text
+        assert "<item>" in r.text
+
+
+# ----------------------- Subscribe (email no-op) -----------------------
+
+class TestSubscribeNoop:
+    def test_subscribe_still_succeeds_with_empty_resend_key(self, api_client):
+        # Even with RESEND_API_KEY="" the subscribe endpoint should return 201
+        email = f"TEST_noopsub_{uuid.uuid4().hex[:8]}@x.io"
+        r = api_client.post(f"{API}/subscribe", json={"email": email}, timeout=10)
+        assert r.status_code == 201
+        assert r.json()["success"] is True

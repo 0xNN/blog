@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider, useLang } from "@/contexts/LanguageContext";
@@ -16,6 +17,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
 import EditorPage from "@/pages/EditorPage";
+import AcceptInvite from "@/pages/AcceptInvite";
 import NotFound from "@/pages/NotFound";
 
 import "@/index.css";
@@ -38,6 +40,7 @@ function AppShell() {
                     <Route path="register" element={<Register />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="editor/:id" element={<EditorPage />} />
+                    <Route path="invite/:token" element={<AcceptInvite />} />
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </main>

@@ -9,6 +9,7 @@ import CommentSection from "@/components/CommentSection";
 import NewsletterForm from "@/components/NewsletterForm";
 import AdSlot from "@/components/AdSlot";
 import { Clock, Eye, ArrowLeft, Twitter, Linkedin, Link as LinkIcon, Check } from "lucide-react";
+import { ArticleSeo } from "@/components/Seo";
 
 export default function ArticleDetail() {
     const { slug } = useParams();
@@ -66,6 +67,7 @@ export default function ArticleDetail() {
 
     return (
         <>
+            <ArticleSeo article={article} lang={lang} />
             <ReadingProgress />
 
             <article className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-14">

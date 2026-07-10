@@ -4,6 +4,7 @@ import api from "@/lib/api";
 import { useLang } from "@/contexts/LanguageContext";
 import ArticleCard from "@/components/ArticleCard";
 import { Twitter, Github, Globe } from "lucide-react";
+import { AuthorSeo } from "@/components/Seo";
 
 export default function AuthorPage() {
     const { slug } = useParams();
@@ -25,6 +26,7 @@ export default function AuthorPage() {
     const a = data.author;
     return (
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
+            <AuthorSeo author={a} lang={lang} />
             <header className="flex flex-col sm:flex-row gap-6 items-start mb-10 pb-10 border-b border-border">
                 {a.avatar_url ? (
                     <img src={a.avatar_url} alt={a.name} className="h-24 w-24 rounded-full object-cover" />

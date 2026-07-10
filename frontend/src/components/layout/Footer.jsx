@@ -48,7 +48,7 @@ export default function Footer() {
                             <a href="#" aria-label="Github" className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))]" data-testid="footer-github">
                                 <Github className="h-4 w-4" />
                             </a>
-                            <a href="/api/sitemap.xml" aria-label="RSS" className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))]" data-testid="footer-rss">
+                            <a href="/api/rss.xml?lang=id" aria-label="RSS" className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))]" data-testid="footer-rss">
                                 <Rss className="h-4 w-4" />
                             </a>
                         </div>

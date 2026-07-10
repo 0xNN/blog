@@ -1,0 +1,46 @@
+{
+  "summary": "Full backend + frontend regression for iteration 2 (Resend structure, header lang slug sync, SEO tags, invite workflow, comment moderation, RSS, view throttling). Backend: 50/50 pytest cases pass (19 new tests + all 31 iteration-1 tests still green). Frontend: article/home/author SEO verified, header lang switcher now navigates to translated slug, invite flow (invalid+valid) works end-to-end, AdminPanel visible for owner and hidden for author, Footer RSS link correct. Fixed one real backend bug during testing (accept_invite returned ObjectId -> 500).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/invites/token/{token}/accept", "issue": "Endpoint was returning 500 because motor's insert_one mutates the dict adding _id: ObjectId which then failed JSON serialization. FIXED by excluding _id (and password_hash) from the response. Verified via pytest test_accept_invite_flow + UI flow."},
+      {"endpoint": "Duplicate CORSMiddleware (still present from iteration 1)", "issue": "server.py still adds only one CORSMiddleware now (checked, iteration 1 comment is stale) — verified only one add_middleware call remains. NO ACTION."},
+      {"endpoint": "N/A (frontend leak)", "issue": "meta[name='description'] injected by ArticleSeo appears as a SECOND element because the default CRA description tag in public/index.html is not removed. document.querySelector('meta[name=description]') returns the CRA default ('A product of emergent.sh') instead of the article description. Non-blocking but should be fixed by having Seo.jsx update an existing meta[name=description] in place or remove the default from index.html."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Article page <head>", "issues": ["The default CRA meta[name='description'] ('A product of emergent.sh') is not removed/overridden by ArticleSeo/PageSeo. Two description tags now exist on every page, and the first (default) one wins for scrapers that read the first match."]}
+    ],
+    "note_on_testids": "AdminPanel moderation tab uses data-testid='admin-tab-comments' (not 'admin-tab-moderation' as the review request loosely worded). This is fine — the tab renders with the label 'Moderasi/Moderation'. Consider renaming the testid for consistency with the label if desired."
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Fix duplicate description meta tag — either remove the CRA default in public/index.html or update Seo.jsx to overwrite the existing meta[name='description'] rather than always appending a new one.",
+    "(Optional) Rename data-testid='admin-tab-comments' to 'admin-tab-moderation' to match the visible label & review-request wording.",
+    "No other retest needed — accept_invite fix already verified by pytest + UI."
+  ],
+  "critical_code_review_comments": [
+    "server.py accept_invite: fixed the ObjectId leakage. Same pattern should be audited elsewhere — any code doing `await db.X.insert_one(doc)` then returning `doc` will hit the same issue. Currently other endpoints (create_article, create_comment, subscribe, create_invite, register/login) already project or copy fields, but stay vigilant.",
+    "View throttling uses an in-memory dict (_VIEW_CACHE) keyed by ip:article_id — this will not deduplicate across multiple backend worker processes (behind a load balancer). For a single-process deployment (as in this preview) it works correctly. For multi-worker prod, consider Redis or a Mongo TTL collection.",
+    "email_service._is_configured() gates on key.startswith('re_') — correct for real Resend keys. Test key or dummy value would be treated as unconfigured, which is the intended graceful no-op.",
+    "Header.jsx handleLangSwitch: does 2 API calls (article fetch + siblings) — could be reduced to a single /siblings-by-slug endpoint. Not a bug, just a perf note.",
+    "Seo.jsx overwrites document.title and injects head tags via useEffect; SSR/prerender bots that don't execute JS will see the stale CRA default title. Acceptable for a SPA in dev, but consider server-side rendering for SEO-critical pages in production."
+  ],
+  "updated_files": [
+    "/app/backend/server.py (fix: accept_invite response now excludes _id and password_hash)",
+    "/app/backend/tests/backend_test.py (extended: +19 tests for invites, admin/comments moderation, RSS, siblings, view throttling, subscribe no-op; updated view test to reflect throttling)"
+  ],
+  "success_rate": {"backend": "100% (50/50)", "frontend": "100% (all critical iteration-2 flows verified)"},
+  "test_credentials": "admin@devhub.io/Admin123! (owner), author@devhub.io/Author123! (author), editor@devhub.io/Editor123! (editor). Newly-invited test users use password 'Passw0rd!'.",
+  "seed_data_creation": "No new seed. Tests create data with TEST_ prefix and clean up. A few TEST_-prefixed invites/users may remain in DB from the accept_invite test flow (intentional to verify persistence). Not affecting production data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend suite at /app/backend/tests/backend_test.py runs in ~8s with 2 workers, 50 tests. Iteration-2 endpoints (invites, admin comments, rss, siblings) all in place. Header lang switch on /:lang/blog/:slug uses two API calls (article-by-slug + article-by-id/siblings) — allow ~3s after click before asserting URL. SEO tags injected via useEffect in Seo.jsx — allow 3-4s after navigation before querying <head>. RESEND_API_KEY intentionally empty; send_email returns {status:'skipped'} rather than raising. When RESEND_API_KEY is later set (must start with 're_'), the invite creation UI shows 'Undangan dibuat. Cek inbox penerima.' instead of 'Resend belum dikonfigurasi'.",
+  "rca of the issue": "Bug: POST /api/invites/token/{token}/accept -> 500 Internal Server Error. Root cause: `await db.users.insert_one(user)` mutates the `user` dict to add `_id: ObjectId(...)`; the subsequent `return {k: v for k, v in user.items() if k != 'password_hash'}` included that ObjectId which is not JSON-serializable by FastAPI's default jsonable_encoder ('ObjectId object is not iterable' inside jsonable_encoder's dict() fallback). Reproduction: create an invite as owner, then POST to the accept endpoint with a valid token+password. Mitigation applied: added '_id' to the excluded keys in the dict-comprehension response. Also added assertion `assert '_id' not in user` to the pytest case to guard against regression."
+}

@@ -4,6 +4,7 @@ import api from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { PenSquare, Trash2, Eye, LogOut, Sparkles, Users, FileText } from "lucide-react";
+import AdminPanel from "@/components/AdminPanel";
 
 export default function Dashboard() {
     const { user, logout, loading } = useAuth();
@@ -108,6 +109,8 @@ export default function Dashboard() {
                     )}
                 </ul>
             </section>
+
+            {(user.role === "owner" || user.role === "editor") && <AdminPanel />}
         </div>
     );
 }
