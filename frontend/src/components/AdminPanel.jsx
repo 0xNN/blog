@@ -7,7 +7,7 @@ import { UserPlus, Trash2, MessageSquareWarning, CheckCheck } from "lucide-react
 const ROLE_OPTIONS = ["author", "editor"];
 
 export default function AdminPanel() {
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const { t } = useLang();
     const [tab, setTab] = useState("invites"); // invites | comments | subscribers
     const [invites, setInvites] = useState([]);
@@ -17,7 +17,7 @@ export default function AdminPanel() {
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
-    const canAccess = user && (user.role === "owner" || user.role === "editor");
+    const canAccess = profile && (profile.role === "owner" || profile.role === "editor");
 
     const loadInvites = () => api.get("/invites").then((r) => setInvites(r.data));
     const loadComments = () => api.get("/admin/comments").then((r) => setComments(r.data));

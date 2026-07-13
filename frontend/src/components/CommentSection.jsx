@@ -16,7 +16,7 @@ function timeAgo(iso, lang) {
 }
 
 export default function CommentSection({ articleId }) {
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const { lang, t } = useLang();
     const [comments, setComments] = useState([]);
     const [body, setBody] = useState("");
@@ -60,7 +60,7 @@ export default function CommentSection({ articleId }) {
             {user && user !== false ? (
                 <form onSubmit={submit} className="mb-8 flex gap-3">
                     <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-bold flex-shrink-0">
-                        {user.name?.[0]?.toUpperCase() || "?"}
+                        {(profile?.name || user?.email)?.[0]?.toUpperCase() || "?"}
                     </div>
                     <div className="flex-1 flex gap-2">
                         <input
@@ -110,7 +110,7 @@ export default function CommentSection({ articleId }) {
                             <div className="flex items-center gap-2 text-sm">
                                 <span className="font-semibold">{c.user_name}</span>
                                 <span className="text-xs text-muted-foreground">{timeAgo(c.created_at, lang)}</span>
-                                {user && (user.id === c.user_id || user.role === "owner" || user.role === "editor") && (
+                                {user && (user.id === c.user_id || profile?.role === "owner" || profile?.role === "editor") && (
                                     <button onClick={() => del(c.id)} className="ml-auto text-muted-foreground hover:text-destructive" data-testid={`comment-delete-${c.id}`}>
                                         <Trash2 className="h-3.5 w-3.5" />
                                     </button>

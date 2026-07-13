@@ -7,7 +7,7 @@ import { PenSquare, Trash2, Eye, LogOut, Sparkles, Users, FileText } from "lucid
 import AdminPanel from "@/components/AdminPanel";
 
 export default function Dashboard() {
-    const { user, logout, loading } = useAuth();
+    const { user, profile, logout, loading } = useAuth();
     const { lang, t } = useLang();
     const nav = useNavigate();
     const [articles, setArticles] = useState([]);
@@ -22,14 +22,14 @@ export default function Dashboard() {
         api.get(`/articles?status=draft&limit=100`).then((r) => {
             api.get(`/articles?status=published&limit=100`).then((r2) => {
                 const all = [...r.data, ...r2.data];
-                const mine = user.role === "author" ? all.filter((a) => a.author_id === user.id) : all;
+                const mine = profile?.role === "author" ? all.filter((a) => a.author_id === user.id) : all;
                 setArticles(mine);
             });
         });
-        if (user.role === "owner" || user.role === "editor") {
+        if (profile?.role === "owner" || profile?.role === "editor") {
             api.get("/analytics/summary").then((r) => setAnalytics(r.data)).catch(() => {});
         }
-    }, [user]);
+    }, [user, profile]);
 
     const del = async (id) => {
         if (!confirm(t("Hapus artikel ini?", "Delete this article?"))) return;
@@ -47,9 +47,12 @@ export default function Dashboard() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
             <header className="flex flex-wrap items-center justify-between gap-4 mb-10">
                 <div>
-                    <div className="text-xs uppercase tracking-widest text-muted-foreground font-mono mb-2">Dashboard · {user.role}</div>
+                    <div className="text-xs uppercase tracking-widest text-muted-foreground font-mono mb-2">Dashboard · {profile?.role || "…"}</div>
                     <h1 className="font-heading text-4xl sm:text-5xl font-black tracking-tight">
-                        {t(`Halo, ${user.name.split(" ")[0]}`, `Hi, ${user.name.split(" ")[0]}`)}
+                        {(() => {
+                            const nm = (profile?.name || user?.email || "").split(" ")[0];
+                            return t(`Halo, ${nm}`, `Hi, ${nm}`);
+                        })()}
                     </h1>
                 </div>
                 <div className="flex gap-2">
@@ -110,7 +113,7 @@ export default function Dashboard() {
                 </ul>
             </section>
 
-            {(user.role === "owner" || user.role === "editor") && <AdminPanel />}
+            {(profile?.role === "owner" || profile?.role === "editor") && <AdminPanel />}
         </div>
     );
 }
