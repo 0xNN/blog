@@ -157,6 +157,36 @@ class SubscriberOut(BaseModel):
     active: bool = True
 
 
+# -------------------- AFFILIATE --------------------
+class AffiliateLinkBase(BaseModel):
+    name: str = Field(min_length=1)
+    url: str = Field(min_length=1)
+    merchant: str = ""
+    category_slug: Optional[str] = None
+    description: str = ""
+    image_url: Optional[str] = ""
+
+
+class AffiliateLinkCreate(AffiliateLinkBase):
+    pass
+
+
+class AffiliateLinkUpdate(BaseModel):
+    name: Optional[str] = None
+    url: Optional[str] = None
+    merchant: Optional[str] = None
+    category_slug: Optional[str] = None
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+
+
+class AffiliateLinkOut(AffiliateLinkBase):
+    id: str
+    clicks: int = 0
+    created_at: str
+    updated_at: str
+
+
 # -------------------- AI --------------------
 class AIWriteRequest(BaseModel):
     prompt: str

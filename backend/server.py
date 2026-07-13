@@ -21,6 +21,7 @@ import slugify as _slug_mod
 from models import (
     UserRegister, UserLogin, UserPublic, ArticleCreate, ArticleUpdate,
     CommentCreate, SubscribeIn, AIWriteRequest, CATEGORIES,
+    AffiliateLinkCreate, AffiliateLinkUpdate,
 )
 from auth import (
     hash_password, verify_password, create_access_token, create_refresh_token,
@@ -742,6 +743,87 @@ async def download_file(file_id: str):
     return FastResponse(content=data, media_type=record.get("content_type") or ct)
 
 
+# ================== AFFILIATE LINKS ==================
+@api.get("/affiliate-links")
+async def list_affiliate_links(
+    category: Optional[str] = None,
+    active: bool = Query(True),
+):
+    query: dict = {}
+    if category:
+        query["category_slug"] = category
+    if active:
+        query["active"] = True
+    links = await db.affiliate_links.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    return links
+
+
+@api.post("/affiliate-links", status_code=201)
+async def create_affiliate_link(body: AffiliateLinkCreate, user: dict = Depends(require_role("owner", "editor"))):
+    now = now_iso()
+    doc = {
+        "id": str(uuid.uuid4()),
+        "name": body.name,
+        "url": body.url,
+        "merchant": body.merchant,
+        "category_slug": body.category_slug,
+        "description": body.description,
+        "image_url": body.image_url or "",
+        "clicks": 0,
+        "active": True,
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.affiliate_links.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api.put("/affiliate-links/{link_id}")
+async def update_affiliate_link(link_id: str, body: AffiliateLinkUpdate, user: dict = Depends(require_role("owner", "editor"))):
+    existing = await db.affiliate_links.find_one({"id": link_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Affiliate link not found")
+    update = {k: v for k, v in body.model_dump(exclude_unset=True).items() if v is not None}
+    if "active" in update:
+        update["active"] = bool(update["active"])
+    update["updated_at"] = now_iso()
+    await db.affiliate_links.update_one({"id": link_id}, {"$set": update})
+    doc = await db.affiliate_links.find_one({"id": link_id}, {"_id": 0})
+    return doc
+
+
+@api.delete("/affiliate-links/{link_id}")
+async def delete_affiliate_link(link_id: str, user: dict = Depends(require_role("owner", "editor"))):
+    result = await db.affiliate_links.delete_one({"id": link_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Affiliate link not found")
+    return {"success": True}
+
+
+@api.get("/r/{link_id}")
+async def affiliate_redirect(link_id: str, request: Request, response: Response):
+    link = await db.affiliate_links.find_one({"id": link_id}, {"_id": 0})
+    if not link or not link.get("active", True):
+        raise HTTPException(status_code=404, detail="Affiliate link not found")
+    # attribute click to an article if ?article_id present
+    article_id = request.query_params.get("article_id")
+    # increment total clicks (and per-article counter if provided)
+    inc: dict = {"clicks": 1}
+    await db.affiliate_links.update_one({"id": link_id}, {"$inc": inc})
+    if article_id:
+        await db.articles.update_one(
+            {"id": article_id},
+            {"$inc": {f"affiliate_clicks.{link_id}": 1}},
+            upsert=False,
+        )
+    return FastResponse(
+        status_code=302,
+        content="",
+        headers={"Location": link["url"], "Cache-Control": "no-store"},
+    )
+
+
 # ================== SEO ==================
 @api.get("/sitemap.xml")
 async def sitemap():
@@ -848,6 +930,8 @@ async def startup():
     await db.subscribers.create_index("email", unique=True)
     await db.invites.create_index("token", unique=True)
     await db.invites.create_index("email")
+    await db.affiliate_links.create_index("id", unique=True)
+    await db.affiliate_links.create_index("category_slug")
     # TTL for article view dedup: expires 30 min after created_at
     await db.article_views.create_index("key", unique=True)
     await db.article_views.create_index("created_at", expireAfterSeconds=1800)

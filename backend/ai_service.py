@@ -2,7 +2,6 @@
 import os
 import uuid
 import logging
-from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +37,14 @@ async def ai_generate(mode: str, prompt: str, source_text: str | None = None, ta
     api_key = os.environ.get("EMERGENT_LLM_KEY")
     if not api_key:
         raise RuntimeError("EMERGENT_LLM_KEY not set")
+
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+    except ImportError:
+        raise RuntimeError(
+            "emergentintegrations is not installed. Install it in the Emergent "
+            "environment or set EMERGENT_LLM_KEY only where the package is available."
+        )
 
     system = SYSTEM_PROMPTS.get(mode, SYSTEM_PROMPTS["draft"])
     session_id = f"ai-{uuid.uuid4()}"

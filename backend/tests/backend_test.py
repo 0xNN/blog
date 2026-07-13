@@ -883,3 +883,65 @@ class TestRelatedArticles:
     def test_related_nonexistent_article_returns_404(self, api_client):
         r = api_client.get(f"{API}/articles/nonexistent-xyz-123/related", timeout=10)
         assert r.status_code == 404
+
+
+# ----------------------- Affiliate Links -----------------------
+
+class TestAffiliateLinks:
+    def test_create_requires_auth(self, api_client):
+        r = api_client.post(f"{API}/affiliate-links", json={
+            "name": "Test Tool", "url": "https://example.com", "merchant": "Example",
+        }, timeout=10)
+        assert r.status_code in (401, 403)
+
+    def test_author_cannot_create(self, author_session):
+        r = author_session.post(f"{API}/affiliate-links", json={
+            "name": "Test Tool", "url": "https://example.com", "merchant": "Example",
+        }, timeout=10)
+        assert r.status_code in (401, 403)
+
+    def test_owner_crud_and_redirect(self, owner_session, api_client):
+        # create
+        created = owner_session.post(f"{API}/affiliate-links", json={
+            "name": "Test Tool", "url": "https://example.com/aff", "merchant": "Example",
+            "category_slug": "tools-review", "description": "d",
+        }, timeout=10)
+        assert created.status_code == 201, created.text[:200]
+        link = created.json()
+        assert link["id"]
+        assert link["clicks"] == 0
+        assert link["active"] is True
+
+        # list (public) — should include active link
+        listed = api_client.get(f"{API}/affiliate-links?category=tools-review", timeout=10)
+        assert listed.status_code == 200
+        ids = {x["id"] for x in listed.json()}
+        assert link["id"] in ids
+
+        # redirect increments click + sponsored relocation
+        redir = api_client.get(f"{API}/r/{link['id']}?article_id=any", timeout=10, allow_redirects=False)
+        assert redir.status_code == 302, redir.text[:200]
+        assert redir.headers["Location"] == "https://example.com/aff"
+        assert "sponsored" not in redir.headers.get("Location", "")
+
+        # clicks incremented
+        after = owner_session.get(f"{API}/affiliate-links", timeout=10).json()
+        updated = next((x for x in after if x["id"] == link["id"]), None)
+        assert updated and updated["clicks"] == 1
+
+        # update (deactivate)
+        upd = owner_session.put(f"{API}/affiliate-links/{link['id']}", json={"active": False}, timeout=10)
+        assert upd.status_code == 200
+        assert upd.json()["active"] is False
+
+        # redirect to inactive -> 404
+        redir_off = api_client.get(f"{API}/r/{link['id']}", timeout=10, allow_redirects=False)
+        assert redir_off.status_code == 404
+
+        # delete
+        deleted = owner_session.delete(f"{API}/affiliate-links/{link['id']}", timeout=10)
+        assert deleted.status_code == 200
+
+    def test_redirect_unknown_link_404(self, api_client):
+        r = api_client.get(f"{API}/r/does-not-exist", timeout=10, allow_redirects=False)
+        assert r.status_code == 404
