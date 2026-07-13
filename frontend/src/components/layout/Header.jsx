@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation, useNavigate, useMatch } from "react-router-dom";
 import { Moon, Sun, Menu, X, Search, PenSquare, LogOut, Layout } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -24,6 +24,14 @@ export default function Header() {
     const [open, setOpen] = useState(false);
     const nav = useNavigate();
     const loc = useLocation();
+
+    const [scrolled, setScrolled] = useState(false);
+    useEffect(() => {
+        const onScroll = () => setScrolled(window.scrollY > 8);
+        onScroll();
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
+    }, []);
 
     const langPrefix = `/${lang}`;
     const articleMatch = useMatch(`/${lang}/blog/:slug`);
@@ -57,7 +65,7 @@ export default function Header() {
     };
 
     return (
-        <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
+        <header className={`sticky top-0 z-40 border-b border-border backdrop-blur-xl transition-all duration-300 ${scrolled ? "bg-background/90 shadow-elev" : "bg-background/70"}`}>
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="flex h-16 items-center justify-between gap-6">
                     <Link
@@ -76,7 +84,7 @@ export default function Header() {
                                 to={`${langPrefix}/category/${c.slug}`}
                                 data-testid={`nav-cat-${c.slug}`}
                                 className={({ isActive }) =>
-                                    `transition-colors ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`
+                                    `link-underline transition-colors ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`
                                 }
                             >
                                 {lang === "id" ? c.id : c.en}

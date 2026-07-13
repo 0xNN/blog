@@ -36,7 +36,17 @@ export default function ArticleDetail() {
         window.scrollTo({ top: 0, behavior: "instant" });
     }, [slug]);
 
-    if (loading) return <div className="mx-auto max-w-3xl px-4 py-20 text-center text-muted-foreground">{t("Memuat…", "Loading…")}</div>;
+    if (loading) return (
+        <div className="mx-auto max-w-3xl px-4 py-14 space-y-4">
+            <div className="skeleton h-4 w-40" />
+            <div className="skeleton h-11 w-full" />
+            <div className="skeleton h-11 w-3/4" />
+            <div className="skeleton aspect-video w-full !mt-8" />
+            <div className="skeleton h-4 w-full !mt-8" />
+            <div className="skeleton h-4 w-full" />
+            <div className="skeleton h-4 w-5/6" />
+        </div>
+    );
     if (notFound || !article) return (
         <div className="mx-auto max-w-2xl px-4 py-20 text-center">
             <h1 className="font-heading text-3xl font-bold mb-4">{t("Artikel tidak ditemukan", "Article not found")}</h1>

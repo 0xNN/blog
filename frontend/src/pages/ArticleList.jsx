@@ -3,6 +3,7 @@ import { useSearchParams, useParams } from "react-router-dom";
 import api from "@/lib/api";
 import { useLang } from "@/contexts/LanguageContext";
 import ArticleCard from "@/components/ArticleCard";
+import ArticleCardSkeleton from "@/components/ArticleCardSkeleton";
 import { Search } from "lucide-react";
 
 export default function ArticleList() {
@@ -59,7 +60,9 @@ export default function ArticleList() {
             </div>
 
             {loading ? (
-                <div className="text-center py-16 text-muted-foreground">{t("Memuat…", "Loading…")}</div>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Array.from({ length: 6 }).map((_, i) => <ArticleCardSkeleton key={i} />)}
+                </div>
             ) : articles.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground font-body">
                     {t("Belum ada artikel di sini.", "No articles here yet.")}
