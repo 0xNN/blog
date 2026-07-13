@@ -106,11 +106,11 @@ export default function ArticleDetail() {
                             </button>
                         )}
                     </div>
-                    <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05] mb-6" data-testid="article-title">
+                    <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-[1.1] mb-4" data-testid="article-title">
                         {content.title}
                     </h1>
                     {content.excerpt && (
-                        <p className="font-body text-lg lg:text-xl text-muted-foreground leading-relaxed">
+                        <p className="font-body text-base lg:text-base text-muted-foreground leading-relaxed max-w-2xl">
                             {content.excerpt}
                         </p>
                     )}
@@ -154,8 +154,8 @@ export default function ArticleDetail() {
                     </div>
                 )}
 
-                <div className="grid lg:grid-cols-[minmax(0,1fr)_auto] gap-10 max-w-6xl mx-auto">
-                    <div className="max-w-3xl min-w-0" data-article-body data-testid="article-body">
+                <div className="grid lg:grid-cols-[minmax(0,1fr)_14rem] gap-8 max-w-5xl mx-auto">
+                    <div className="min-w-0" data-article-body data-testid="article-body">
                         <MarkdownRenderer content={beforeAd} />
                         <AdSlot position="in-article" enabled={article.ads_enabled} />
                         <MarkdownRenderer content={afterAd} />
