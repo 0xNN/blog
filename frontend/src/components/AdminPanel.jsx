@@ -2,9 +2,14 @@ import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
-import { UserPlus, Trash2, MessageSquareWarning, CheckCheck } from "lucide-react";
+import { UserPlus, Trash2, MessageSquareWarning, CheckCheck, Link2, Plus, Power } from "lucide-react";
 
 const ROLE_OPTIONS = ["author", "editor"];
+const CATEGORIES = [
+    "tutorial-coding", "error-solutions", "tools-review", "developer-finance",
+    "ai-prompt", "ai-agents", "career-interview", "nocode-lowcode",
+    "saas-indie", "blockchain-crypto", "trading",
+];
 
 export default function AdminPanel() {
     const { user, profile } = useAuth();
@@ -16,19 +21,24 @@ export default function AdminPanel() {
     const [form, setForm] = useState({ email: "", name: "", role: "author" });
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+    const [links, setLinks] = useState([]);
+    const [affForm, setAffForm] = useState({ name: "", url: "", merchant: "", category_slug: "tools-review", description: "", image_url: "" });
 
     const canAccess = profile && (profile.role === "owner" || profile.role === "editor");
+    const isOwner = profile?.role === "owner"; // affiliate (money) is owner-only
 
     const loadInvites = () => api.get("/invites").then((r) => setInvites(r.data));
     const loadComments = () => api.get("/admin/comments").then((r) => setComments(r.data));
     const loadSubs = () => api.get("/subscribers").then((r) => setSubs(r.data));
+    const loadLinks = () => api.get("/affiliate-links?all=1").then((r) => setLinks(r.data)).catch(() => {});
 
     useEffect(() => {
         if (!canAccess) return;
         loadInvites();
         loadComments();
         loadSubs();
-    }, [canAccess]);
+        if (isOwner) loadLinks();
+    }, [canAccess, isOwner]);
 
     const invite = async (e) => {
         e.preventDefault();
@@ -67,6 +77,31 @@ export default function AdminPanel() {
         loadComments();
     };
 
+    // ---- Affiliate (owner-only) ----
+    const createLink = async (e) => {
+        e.preventDefault();
+        setError(""); setMessage("");
+        try {
+            await api.post("/affiliate-links", affForm);
+            setAffForm({ name: "", url: "", merchant: "", category_slug: affForm.category_slug, description: "", image_url: "" });
+            setMessage(t("Link afiliasi ditambahkan.", "Affiliate link added."));
+            loadLinks();
+        } catch (err) {
+            setError(err?.response?.data?.error || err.message);
+        }
+    };
+
+    const toggleLink = async (l) => {
+        await api.put(`/affiliate-links/${l.id}`, { active: !l.active });
+        loadLinks();
+    };
+
+    const deleteLink = async (id) => {
+        if (!confirm(t("Hapus link ini?", "Delete this link?"))) return;
+        await api.delete(`/affiliate-links/${id}`);
+        loadLinks();
+    };
+
     if (!canAccess) {
         return (
             <div className="rounded-2xl border border-border p-6 text-sm text-muted-foreground">
@@ -84,6 +119,7 @@ export default function AdminPanel() {
                         ["invites", `${t("Undangan", "Invites")}`],
                         ["moderation", `${t("Moderasi", "Moderation")}`],
                         ["subscribers", `${t("Subscriber", "Subscribers")}`],
+                        ...(isOwner ? [["affiliate", "Affiliate"]] : []),
                     ].map(([k, label]) => (
                         <button
                             key={k}
@@ -205,6 +241,61 @@ export default function AdminPanel() {
                         ))}
                         {subs.length === 0 && (
                             <li className="px-4 py-8 text-center text-sm text-muted-foreground">{t("Belum ada subscriber.", "No subscribers yet.")}</li>
+                        )}
+                    </ul>
+                </div>
+            )}
+
+            {tab === "affiliate" && isOwner && (
+                <div className="rounded-2xl border border-border overflow-hidden">
+                    <form onSubmit={createLink} className="p-4 border-b border-border grid gap-2 sm:grid-cols-2">
+                        <input required placeholder={t("Nama (mis. Hostinger)", "Name (e.g. Hostinger)")} value={affForm.name}
+                            onChange={(e) => setAffForm({ ...affForm, name: e.target.value })}
+                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm" data-testid="aff-name" />
+                        <input required type="url" placeholder={t("URL afiliasi (pakai kode referral Anda)", "Affiliate URL (your referral code)")} value={affForm.url}
+                            onChange={(e) => setAffForm({ ...affForm, url: e.target.value })}
+                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm" data-testid="aff-url" />
+                        <input placeholder={t("Merchant", "Merchant")} value={affForm.merchant}
+                            onChange={(e) => setAffForm({ ...affForm, merchant: e.target.value })}
+                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm" data-testid="aff-merchant" />
+                        <select value={affForm.category_slug}
+                            onChange={(e) => setAffForm({ ...affForm, category_slug: e.target.value })}
+                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm" data-testid="aff-category">
+                            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        <input placeholder={t("Deskripsi singkat", "Short description")} value={affForm.description}
+                            onChange={(e) => setAffForm({ ...affForm, description: e.target.value })}
+                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm sm:col-span-2" data-testid="aff-desc" />
+                        <input placeholder={t("URL gambar (opsional)", "Image URL (optional)")} value={affForm.image_url}
+                            onChange={(e) => setAffForm({ ...affForm, image_url: e.target.value })}
+                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm sm:col-span-2" data-testid="aff-image" />
+                        <button type="submit" data-testid="aff-submit"
+                            className="rounded-lg bg-[hsl(var(--accent))] text-white px-4 py-2 text-sm font-semibold hover:opacity-90 inline-flex items-center justify-center gap-1.5 sm:col-span-2">
+                            <Plus className="h-3.5 w-3.5" /> {t("Tambah link", "Add link")}
+                        </button>
+                    </form>
+                    {message && <div className="px-4 py-2 text-xs text-[hsl(var(--accent))] bg-[hsl(var(--accent))]/10">{message}</div>}
+                    {error && <div className="px-4 py-2 text-xs text-destructive bg-destructive/10">{error}</div>}
+                    <ul>
+                        {links.map((l) => (
+                            <li key={l.id} data-testid={`aff-row-${l.id}`} className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 text-sm">
+                                <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-semibold truncate">{l.name} <span className="text-xs text-muted-foreground font-normal">· {l.category_slug}</span></div>
+                                    <div className="text-xs text-muted-foreground truncate">{l.url}</div>
+                                </div>
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">{l.clicks || 0} {t("klik", "clicks")}</span>
+                                <button onClick={() => toggleLink(l)} title={l.active ? t("Nonaktifkan", "Deactivate") : t("Aktifkan", "Activate")}
+                                    className={`p-1.5 rounded-full hover:bg-muted ${l.active ? "text-green-600" : "text-muted-foreground"}`} data-testid={`aff-toggle-${l.id}`}>
+                                    <Power className="h-3.5 w-3.5" />
+                                </button>
+                                <button onClick={() => deleteLink(l.id)} className="p-1.5 rounded-full hover:bg-destructive/10 hover:text-destructive" data-testid={`aff-delete-${l.id}`}>
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                            </li>
+                        ))}
+                        {links.length === 0 && (
+                            <li className="px-4 py-8 text-center text-sm text-muted-foreground">{t("Belum ada link afiliasi.", "No affiliate links yet.")}</li>
                         )}
                     </ul>
                 </div>

@@ -818,6 +818,17 @@ async function handleAffiliateLinks(req: Request, match: RegExpExecArray | null,
   const linkId = match?.[1];
 
   if (req.method === "GET" && !linkId) {
+    // Owner-only admin listing: ALL links (incl. inactive, all categories).
+    if (url.searchParams.get("all") === "1") {
+      const owner = await getUser(req, true);
+      await requireRole(owner, "owner");
+      const { data } = await supabase
+        .from("affiliate_links")
+        .select("*")
+        .order("created_at", { ascending: false });
+      return jsonResponse(data || []);
+    }
+    // Public: only active links, optionally filtered by category (for AffiliateBox).
     const category = url.searchParams.get("category");
     let query = supabase.from("affiliate_links").select("*");
     if (category) query = query.eq("category_slug", category);
@@ -827,7 +838,7 @@ async function handleAffiliateLinks(req: Request, match: RegExpExecArray | null,
   }
 
   if (req.method === "POST") {
-    await requireRole(user, "owner", "editor");
+    await requireRole(user, "owner"); // affiliate = owner only
     const body = await req.json();
     const { data, error } = await supabase
       .from("affiliate_links")
@@ -839,7 +850,7 @@ async function handleAffiliateLinks(req: Request, match: RegExpExecArray | null,
   }
 
   if (req.method === "PUT" && linkId) {
-    await requireRole(user, "owner", "editor");
+    await requireRole(user, "owner"); // affiliate = owner only
     const body = await req.json();
     const { data, error } = await supabase
       .from("affiliate_links")
@@ -852,7 +863,7 @@ async function handleAffiliateLinks(req: Request, match: RegExpExecArray | null,
   }
 
   if (req.method === "DELETE" && linkId) {
-    await requireRole(user, "owner", "editor");
+    await requireRole(user, "owner"); // affiliate = owner only
     const { error } = await supabase.from("affiliate_links").delete().eq("id", linkId);
     if (error) return errorResponse(error.message, 500);
     return jsonResponse({ success: true });
@@ -890,7 +901,8 @@ const routes: Array<{
   { pattern: /^\/upload$/, methods: ["POST"], handler: handleUpload, requireAuth: true },
   { pattern: /^\/files\/(.+)$/, methods: ["GET"], handler: handleDownloadFile },
   { pattern: /^\/affiliate-links\/([a-f0-9-]+)$/, methods: ["GET", "PUT", "DELETE"], handler: handleAffiliateLinks, requireAuth: true },
-  { pattern: /^\/affiliate-links$/, methods: ["GET", "POST"], handler: handleAffiliateLinks },
+  { pattern: /^\/affiliate-links$/, methods: ["POST"], handler: handleAffiliateLinks, requireAuth: true },
+  { pattern: /^\/affiliate-links$/, methods: ["GET"], handler: handleAffiliateLinks },
   { pattern: /^\/users\/me\/profile$/, methods: ["GET"], handler: handleMyProfile, requireAuth: true },
   { pattern: /^\/users\/me$/, methods: ["GET"], handler: handleMe, requireAuth: true },
   { pattern: /^\/admin\/comments$/, methods: ["GET"], handler: handleAdminListComments, requireAuth: true },
