@@ -77,12 +77,12 @@ function slugify(text: string): string {
 }
 
 // GET /users/me — current user from Supabase auth
-async function handleMe(req: Request, user: any) {
+async function handleMe(req: Request, _m: any, user: any) {
   return jsonResponse(user);
 }
 
 // GET /users/me/profile — user profile from user_profiles table
-async function handleMyProfile(req: Request, user: any) {
+async function handleMyProfile(req: Request, _m: any, user: any) {
   const supabase = getSupabaseAdmin();
   let { data } = await supabase
     .from("user_profiles")
@@ -120,7 +120,7 @@ async function handleMyProfile(req: Request, user: any) {
 
 // --------------- ADMIN COMMENTS ---------------
 // GET /admin/comments
-async function handleAdminListComments(req: Request, user: any) {
+async function handleAdminListComments(req: Request, _m: any, user: any) {
   await requireRole(user, "owner", "editor");
   const supabase = getSupabaseAdmin();
   const url = new URL(req.url);
@@ -300,7 +300,7 @@ async function handleAcceptInvite(req: Request, match: RegExpExecArray) {
 }
 
 // GET /subscribers (admin)
-async function handleSubscribersList(req: Request, user: any) {
+async function handleSubscribersList(req: Request, _m: any, user: any) {
   await requireRole(user, "owner", "editor");
   const supabase = getSupabaseAdmin();
   const { data } = await supabase
@@ -569,7 +569,7 @@ async function handleGetAuthor(req: Request, match: RegExpExecArray) {
 }
 
 // POST /articles
-async function handleCreateArticle(req: Request, user: any) {
+async function handleCreateArticle(req: Request, _m: any, user: any) {
   await requireRole(user, "owner", "editor", "author"); // readers cannot write articles
   const supabase = getSupabaseAdmin();
   const body = await req.json();
@@ -689,7 +689,7 @@ async function handleListComments(req: Request, match: RegExpExecArray) {
 }
 
 // POST /comments
-async function handleCreateComment(req: Request, user: any) {
+async function handleCreateComment(req: Request, _m: any, user: any) {
   const supabase = getSupabaseAdmin();
   const body = await req.json();
   const comment = {
@@ -751,7 +751,7 @@ async function handleSubscribe(req: Request) {
 }
 
 // GET /analytics/summary
-async function handleAnalytics(user: any) {
+async function handleAnalytics(_req: Request, _m: any, user: any) {
   const supabase = getSupabaseAdmin();
   await requireRole(user, "owner", "editor");
 
@@ -788,7 +788,7 @@ async function handleAnalytics(user: any) {
 }
 
 // POST /ai/generate
-async function handleAiGenerate(req: Request, user: any) {
+async function handleAiGenerate(req: Request, _m: any, user: any) {
   if (!EMERGENT_LLM_KEY) {
     return errorResponse("EMERGENT_LLM_KEY not set", 500);
   }
@@ -819,7 +819,7 @@ async function handleAiGenerate(req: Request, user: any) {
 }
 
 // POST /upload
-async function handleUpload(req: Request, user: any) {
+async function handleUpload(req: Request, _m: any, user: any) {
   const supabase = getSupabaseAdmin();
   const formData = await req.formData();
   const file = formData.get("file") as File;
