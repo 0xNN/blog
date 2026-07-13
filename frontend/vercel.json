@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://api.msncode.dev/api/:path*" },
+    { "source": "/ads.txt", "destination": "https://api.msncode.dev/api/ads.txt" },
+    { "source": "/sitemap.xml", "destination": "https://api.msncode.dev/api/sitemap.xml" },
+    { "source": "/rss.xml", "destination": "https://api.msncode.dev/api/rss.xml" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

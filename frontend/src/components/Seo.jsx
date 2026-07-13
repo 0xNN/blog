@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
+// Absolute origin of the SITE (frontend), used for canonical/OG/JSON-LD URLs.
+// In prod this resolves to https://blog.msncode.dev automatically.
+const SITE_URL = import.meta.env.VITE_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
 const SITE_NAME = "Developer Hub";
 
 /**
@@ -48,7 +50,7 @@ export function ArticleSeo({ article, lang }) {
         const content = article[`content_${lang}`] || article.content_id || article.content_en;
         if (!content) return;
 
-        const url = `${BACKEND_URL}/${lang}/blog/${content.slug}`;
+        const url = `${SITE_URL}/${lang}/blog/${content.slug}`;
         const otherLang = lang === "id" ? "en" : "id";
         const other = article[`content_${otherLang}`];
         const title = `${content.title} · ${SITE_NAME}`;
@@ -66,7 +68,7 @@ export function ArticleSeo({ article, lang }) {
             "author": {
                 "@type": "Person",
                 "name": article.author_name,
-                "url": `${BACKEND_URL}/${lang}/author/${article.author_slug}`,
+                "url": `${SITE_URL}/${lang}/author/${article.author_slug}`,
             },
             "publisher": { "@type": "Organization", "name": SITE_NAME },
             "mainEntityOfPage": { "@type": "WebPage", "@id": url },
@@ -78,8 +80,8 @@ export function ArticleSeo({ article, lang }) {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             "itemListElement": [
-                { "@type": "ListItem", "position": 1, "name": SITE_NAME, "item": `${BACKEND_URL}/${lang}` },
-                { "@type": "ListItem", "position": 2, "name": article.category_slug.replace(/-/g, " "), "item": `${BACKEND_URL}/${lang}/category/${article.category_slug}` },
+                { "@type": "ListItem", "position": 1, "name": SITE_NAME, "item": `${SITE_URL}/${lang}` },
+                { "@type": "ListItem", "position": 2, "name": article.category_slug.replace(/-/g, " "), "item": `${SITE_URL}/${lang}/category/${article.category_slug}` },
                 { "@type": "ListItem", "position": 3, "name": content.title, "item": url },
             ],
         };
@@ -89,7 +91,7 @@ export function ArticleSeo({ article, lang }) {
         setHeadTags([
             { tag: "meta", attrs: { name: "description", content: description } },
             { tag: "link", attrs: { rel: "canonical", href: url } },
-            other?.slug && { tag: "link", attrs: { rel: "alternate", hreflang: otherLang, href: `${BACKEND_URL}/${otherLang}/blog/${other.slug}` } },
+            other?.slug && { tag: "link", attrs: { rel: "alternate", hreflang: otherLang, href: `${SITE_URL}/${otherLang}/blog/${other.slug}` } },
             { tag: "link", attrs: { rel: "alternate", hreflang: lang, href: url } },
             { tag: "meta", attrs: { property: "og:type", content: "article" } },
             { tag: "meta", attrs: { property: "og:site_name", content: SITE_NAME } },
@@ -122,7 +124,7 @@ export function ArticleSeo({ article, lang }) {
 
 export function PageSeo({ title, description, path, lang }) {
     useEffect(() => {
-        const url = `${BACKEND_URL}${path || `/${lang}`}`;
+        const url = `${SITE_URL}${path || `/${lang}`}`;
         const fullTitle = title ? `${title} · ${SITE_NAME}` : SITE_NAME;
         setTitle(fullTitle);
         setHtmlLang(lang);
@@ -144,7 +146,7 @@ export function PageSeo({ title, description, path, lang }) {
 export function AuthorSeo({ author, lang }) {
     useEffect(() => {
         if (!author) return;
-        const url = `${BACKEND_URL}/${lang}/author/${author.slug}`;
+        const url = `${SITE_URL}/${lang}/author/${author.slug}`;
         const description = author.bio || `${author.name} on ${SITE_NAME}`;
         const jsonLd = {
             "@context": "https://schema.org",

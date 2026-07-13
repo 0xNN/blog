@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+// Kosong di production -> API_BASE = "/api" (di-proxy Vercel ke backend, sama-origin).
+// Di dev, .env berisi VITE_BACKEND_URL=http://localhost:8001.
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 export const API_BASE = `${BACKEND_URL}/api`;
 
 const api = axios.create({
