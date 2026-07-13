@@ -57,12 +57,37 @@ async function handleMe(req: Request, user: any) {
 // GET /users/me/profile — user profile from user_profiles table
 async function handleMyProfile(req: Request, user: any) {
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
+  let { data } = await supabase
     .from("user_profiles")
     .select("*")
     .eq("id", user.id)
     .single();
-  if (error || !data) return errorResponse("Profile not found", 404);
+
+  // Self-heal: if the signup trigger didn't create a profile, create it now
+  // (default role 'reader'). This makes login resilient to a missing/broken trigger.
+  if (!data) {
+    const meta = user.user_metadata || {};
+    const name = meta.name || meta.full_name || (user.email || "user").split("@")[0];
+    let slug = slugify(name) || `user-${String(user.id).slice(0, 8)}`;
+    const { data: clash } = await supabase
+      .from("user_profiles").select("id").eq("slug", slug).maybeSingle();
+    if (clash) slug = `${slug}-${String(user.id).slice(0, 4)}`;
+    const ins = await supabase
+      .from("user_profiles")
+      .insert({
+        id: user.id,
+        email: user.email,
+        name,
+        slug,
+        role: "reader",
+        avatar_url: meta.avatar_url || meta.picture || "",
+      })
+      .select()
+      .single();
+    data = ins.data;
+  }
+
+  if (!data) return errorResponse("Profile not found", 404);
   return jsonResponse(data);
 }
 
