@@ -85,6 +85,17 @@ async function handleMyProfile(req: Request, user: any) {
       .select()
       .single();
     data = ins.data;
+    if (!data) {
+      // DEBUG: reveal exactly what the function received + why the insert failed.
+      return jsonResponse({
+        error: "Profile not found",
+        debug: {
+          uid: user?.id,
+          email: user?.email,
+          insert_error: ins.error?.message || null,
+        },
+      }, 404);
+    }
   }
 
   if (!data) return errorResponse("Profile not found", 404);
