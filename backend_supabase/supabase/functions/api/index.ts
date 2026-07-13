@@ -5,6 +5,7 @@ import { CATEGORIES, type Role, type Status, type CommentStatus, type Lang } fro
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "";
 const EMERGENT_LLM_KEY = Deno.env.get("EMERGENT_LLM_KEY") || "";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
@@ -15,13 +16,21 @@ function getSupabaseAdmin() {
 
 // --------------- Auth helpers ---------------
 async function getUser(req: Request, requireAuth = true) {
-  const supabase = getSupabaseAdmin();
   const authHeader = req.headers.get("Authorization") || "";
-  const token = authHeader.replace("Bearer ", "");
-  if (!token && requireAuth) throw new Error("Not authenticated");
-  if (!token) return null;
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) {
+  if (!authHeader) {
+    if (requireAuth) throw new Error("Not authenticated");
+    return null;
+  }
+  // Canonical Edge Function auth pattern: anon client scoped to the caller's
+  // Authorization header, then getUser() with NO argument. The previous
+  // admin.getUser(token) returned a user object with undefined id/email in
+  // this runtime, which broke every authenticated route.
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data, error } = await client.auth.getUser();
+  const user = data?.user;
+  if (error || !user?.id) {
     if (requireAuth) throw new Error("Not authenticated");
     return null;
   }
@@ -85,17 +94,6 @@ async function handleMyProfile(req: Request, user: any) {
       .select()
       .single();
     data = ins.data;
-    if (!data) {
-      // DEBUG: reveal exactly what the function received + why the insert failed.
-      return jsonResponse({
-        error: "Profile not found",
-        debug: {
-          uid: user?.id,
-          email: user?.email,
-          insert_error: ins.error?.message || null,
-        },
-      }, 404);
-    }
   }
 
   if (!data) return errorResponse("Profile not found", 404);
