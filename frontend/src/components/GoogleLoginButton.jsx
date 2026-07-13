@@ -1,14 +1,15 @@
-// REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+import { supabase } from "@/lib/supabase";
 import { useLang } from "@/contexts/LanguageContext";
 
 export default function GoogleLoginButton({ testId = "google-login-btn" }) {
     const { lang, t } = useLang();
 
-    const startGoogleAuth = () => {
-        // Use browser's dynamic origin, never hardcode.
+    const startGoogleAuth = async () => {
         const redirectUrl = window.location.origin + `/${lang}/auth/callback`;
-        window.location.href =
-            `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+        await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: { redirectTo: redirectUrl },
+        });
     };
 
     return (

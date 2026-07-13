@@ -87,12 +87,6 @@ export default function Login() {
                     {t("Daftar", "Sign up")}
                 </Link>
             </div>
-
-            <div className="mt-8 rounded-xl border border-dashed border-border p-4 text-xs font-mono text-muted-foreground">
-                <div className="font-semibold mb-1">Demo credentials:</div>
-                <div>admin@devhub.io / Admin123!</div>
-                <div>author@devhub.io / Author123!</div>
-            </div>
         </div>
     );
 }

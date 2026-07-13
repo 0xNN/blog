@@ -1,0 +1,49 @@
+[project]
+name = "developer-hub"
+verification_required = false
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "https://blog.msncode.dev",
+  "https://blog.msncode.dev/id/auth/callback",
+  "https://blog.msncode.dev/en/auth/callback"
+]
+jwt_expiry = 3600
+enable_signup = true
+
+# Immediate login after signup (no email-confirmation step) so register() gets a session.
+# Set true to require email verification (then add a "check your inbox" UX in the app).
+[auth.email]
+enable_confirmations = false
+
+[auth.external.google]
+enabled = true
+client_id = ""
+secret = ""
+
+[api]
+enabled = true
+port = 54321
+
+[db]
+port = 54322
+
+[storage]
+enabled = true
+file_size_limit = "5MB"
+
+[storage.buckets.blog-images]
+public = true
+allowed_mime_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+file_size_limit = "5MB"
+
+[edge_runtime]
+enabled = true
+policy = "per_worker"
+
+[functions]
+enabled = true

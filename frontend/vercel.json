@@ -1,10 +1,22 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "devCommand": "npm run dev",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://api.msncode.dev/api/:path*" },
-    { "source": "/ads.txt", "destination": "https://api.msncode.dev/api/ads.txt" },
-    { "source": "/sitemap.xml", "destination": "https://api.msncode.dev/api/sitemap.xml" },
-    { "source": "/rss.xml", "destination": "https://api.msncode.dev/api/rss.xml" },
+    { "source": "/api/:path*", "destination": "https://YOUR_PROJECT_REF.functions.supabase.co/api/:path*" },
+    { "source": "/r/:path*", "destination": "https://YOUR_PROJECT_REF.functions.supabase.co/redirect/:path*" },
+    { "source": "/ads.txt", "destination": "https://YOUR_PROJECT_REF.functions.supabase.co/seo/ads.txt" },
+    { "source": "/sitemap.xml", "destination": "https://YOUR_PROJECT_REF.functions.supabase.co/seo/sitemap.xml" },
+    { "source": "/rss.xml", "destination": "https://YOUR_PROJECT_REF.functions.supabase.co/seo/rss.xml" },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
   ]
 }

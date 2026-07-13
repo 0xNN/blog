@@ -1,49 +1,100 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import api from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(null); // null = checking, false = logged out
+    const [user, setUser] = useState(null); // null=checking, object=logged in, false=logged out
+    const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const fetchMe = useCallback(async () => {
-        // Skip /me check while returning from OAuth — AuthCallback will handle it
-        if (typeof window !== "undefined" && window.location.hash?.includes("session_id=")) {
-            setLoading(false);
-            return;
-        }
+    const fetchProfile = useCallback(async (userId) => {
         try {
-            const { data } = await api.get("/auth/me");
-            setUser(data);
+            const res = await import("@/lib/api").then(m => m.default.get("/users/me/profile"));
+            if (res.data) setProfile(res.data);
         } catch {
-            setUser(false);
-        } finally {
-            setLoading(false);
+            // Profile fetch is best-effort
         }
     }, []);
 
-    useEffect(() => { fetchMe(); }, [fetchMe]);
+    useEffect(() => {
+        // Check current session on mount
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user) {
+                setUser(session.user);
+                fetchProfile(session.user.id);
+            } else {
+                setUser(false);
+            }
+            setLoading(false);
+        });
+
+        // Listen for auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                if (session?.user) {
+                    setUser(session.user);
+                    if (event === "SIGNED_IN") {
+                        fetchProfile(session.user.id);
+                    }
+                } else {
+                    setUser(false);
+                    setProfile(null);
+                }
+                setLoading(false);
+            }
+        );
+
+        return () => subscription?.unsubscribe();
+    }, [fetchProfile]);
 
     const login = async (email, password) => {
-        const { data } = await api.post("/auth/login", { email, password });
-        setUser(data);
-        return data;
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+        if (error) throw error;
+        if (data?.user) {
+            setUser(data.user);
+            fetchProfile(data.user.id);
+        }
+        return data.user;
     };
 
     const register = async (email, password, name) => {
-        const { data } = await api.post("/auth/register", { email, password, name });
-        setUser(data);
-        return data;
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { name, slug: name?.toLowerCase().replace(/\s+/g, "-") },
+            },
+        });
+        if (error) throw error;
+        if (data?.user) {
+            setUser(data.user);
+            fetchProfile(data.user.id);
+        }
+        return data.user;
     };
 
     const logout = async () => {
-        await api.post("/auth/logout");
+        await supabase.auth.signOut();
         setUser(false);
+        setProfile(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout, refresh: fetchMe }}>
+        <AuthContext.Provider
+            value={{
+                user,
+                profile,
+                loading,
+                login,
+                register,
+                logout,
+                refresh: () => fetchProfile(user?.id),
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );
@@ -52,10 +103,11 @@ export function AuthProvider({ children }) {
 export const useAuth = () => useContext(AuthContext);
 
 export function formatApiError(err) {
-    const detail = err?.response?.data?.detail;
-    if (!detail) return err?.message || "Something went wrong";
-    if (typeof detail === "string") return detail;
-    if (Array.isArray(detail))
-        return detail.map((e) => (e?.msg ? e.msg : JSON.stringify(e))).join(" ");
-    return String(detail);
+    // Supabase Auth error
+    if (err?.message && err?.status) return err.message;
+    if (err?.error_description) return err.error_description;
+    // FastAPI-style error (Edge Functions)
+    const detail = err?.response?.data?.error || err?.response?.data?.detail;
+    if (detail) return typeof detail === "string" ? detail : String(detail);
+    return err?.message || "Something went wrong";
 }

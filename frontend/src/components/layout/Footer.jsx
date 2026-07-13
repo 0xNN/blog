@@ -48,7 +48,7 @@ export default function Footer() {
                             <a href="#" aria-label="Github" className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))]" data-testid="footer-github">
                                 <Github className="h-4 w-4" />
                             </a>
-                            <a href="/api/rss.xml?lang=id" aria-label="RSS" className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))]" data-testid="footer-rss">
+                            <a href="/rss.xml?lang=id" aria-label="RSS" className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))]" data-testid="footer-rss">
                                 <Rss className="h-4 w-4" />
                             </a>
                         </div>
@@ -62,7 +62,7 @@ export default function Footer() {
                         <Link to={`/${lang}/contact`} className="hover:text-foreground" data-testid="footer-contact">{t("Kontak", "Contact")}</Link>
                         <Link to={`/${lang}/privacy`} className="hover:text-foreground" data-testid="footer-privacy">{t("Privasi", "Privacy")}</Link>
                         <Link to={`/${lang}/authors`} className="hover:text-foreground">{t("Kontributor", "Contributors")}</Link>
-                        <a href="/api/ads.txt" className="hover:text-foreground">ads.txt</a>
+                        <a href="/ads.txt" className="hover:text-foreground">ads.txt</a>
                     </div>
                 </div>
             </div>
