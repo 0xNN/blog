@@ -106,6 +106,8 @@ defender_*.ps1
 defender_result.txt
 # CommandCode tool working dir
 .commandcode/
+# Vite transient config-load file (Windows)
+*.timestamp-*.mjs
 # Keep env TEMPLATES tracked despite the .env / *.env / .env.* rules above
 !.env.example
 !**/.env.example
