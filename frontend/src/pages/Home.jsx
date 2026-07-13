@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Sparkles, Zap, TrendingUp } from "lucide-react";
+import { ArrowRight, TrendingUp } from "lucide-react";
 import api from "@/lib/api";
 import { useLang } from "@/contexts/LanguageContext";
 import ArticleCard from "@/components/ArticleCard";
 import NewsletterForm from "@/components/NewsletterForm";
 import { PageSeo } from "@/components/Seo";
+import Reveal from "@/components/Reveal";
 
 const PILLARS = [
     { slug: "tutorial-coding", id: "Tutorial Coding", en: "Coding Tutorials", desc_id: "Panduan langkah demi langkah", desc_en: "Step-by-step guides" },
@@ -99,26 +100,16 @@ export default function Home() {
 
             {/* Featured hero article */}
             {heroArticle && (
-                <section className="py-16">
-                    <div className="flex items-center gap-2 mb-6">
-                        <Sparkles className="h-4 w-4 text-[hsl(var(--accent))]" />
-                        <h2 className="font-heading text-sm font-bold uppercase tracking-widest">
-                            {t("Featured", "Featured")}
-                        </h2>
-                    </div>
+                <Reveal as="section" className="py-16">
+                    <div className="eyebrow mb-6">{t("Pilihan Editor", "Featured")}</div>
                     <ArticleCard article={heroArticle} variant="hero" />
-                </section>
+                </Reveal>
             )}
 
             {/* Category pillars */}
-            <section className="py-8">
+            <Reveal as="section" className="py-8">
                 <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-[hsl(var(--accent))]" />
-                        <h2 className="font-heading text-sm font-bold uppercase tracking-widest">
-                            {t("11 Pilar Konten", "11 Content Pillars")}
-                        </h2>
-                    </div>
+                    <div className="eyebrow">{t("11 Pilar Konten", "11 Content Pillars")}</div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {PILLARS.map((p) => (
@@ -137,10 +128,10 @@ export default function Home() {
                         </Link>
                     ))}
                 </div>
-            </section>
+            </Reveal>
 
             {/* Latest + Popular */}
-            <section className="py-16 grid lg:grid-cols-3 gap-10">
+            <Reveal as="section" className="py-16 grid lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="font-heading text-2xl font-bold tracking-tight">
@@ -214,7 +205,7 @@ export default function Home() {
                         <NewsletterForm compact />
                     </div>
                 </aside>
-            </section>
+            </Reveal>
         </div>
     );
 }
