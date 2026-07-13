@@ -95,3 +95,17 @@ credentials.json
 .credentials
 frontend/node_modules/.cache/default-development/5.pack
 frontend/node_modules/.cache/default-development/0.pack
+
+# --- Cleanup 2026-07-13: recurring clutter ---
+# Build/run logs that piled up at root during install troubleshooting
+*.log
+# Manually-downloaded dependency tarballs (offline install attempts)
+*.tgz
+# One-off Windows Defender exclusion scripts
+defender_*.ps1
+defender_result.txt
+# CommandCode tool working dir
+.commandcode/
+# Keep env TEMPLATES tracked despite the .env / *.env / .env.* rules above
+!.env.example
+!**/.env.example
