@@ -1,8 +1,0 @@
-# Railway/Nixpacks config untuk backend.
-# Override install agar pakai requirements-prod.txt (BUKAN requirements.txt yang
-# berisi emergentintegrations [tidak di PyPI] & jq [butuh kompilasi] -> gagal build).
-[phases.install]
-cmds = ["pip install -r requirements-prod.txt"]
-
-[start]
-cmd = "uvicorn server:app --host 0.0.0.0 --port $PORT"
