@@ -15,22 +15,40 @@ function getSupabaseAdmin() {
 }
 
 // --------------- Auth helpers ---------------
+function decodeJwt(token: string): any {
+  try {
+    const part = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const json = atob(part.padEnd(part.length + (4 - part.length % 4) % 4, "="));
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
 async function getUser(req: Request, requireAuth = true) {
   const authHeader = req.headers.get("Authorization") || "";
-  if (!authHeader) {
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token) {
     if (requireAuth) throw new Error("Not authenticated");
     return null;
   }
-  // Canonical Edge Function auth pattern: anon client scoped to the caller's
-  // Authorization header, then getUser() with NO argument. The previous
-  // admin.getUser(token) returned a user object with undefined id/email in
-  // this runtime, which broke every authenticated route.
+  // Validate signature/expiry against the auth server.
   const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
+    global: { headers: { Authorization: `Bearer ${token}` } },
   });
-  const { data, error } = await client.auth.getUser();
-  const user = data?.user;
-  if (error || !user?.id) {
+  const { data, error } = await client.auth.getUser(token);
+  if (error) {
+    if (requireAuth) throw new Error("Not authenticated");
+    return null;
+  }
+  let user: any = data?.user || null;
+  // The SDK user object came back without id/email in this runtime, so derive
+  // them directly from the (already-validated) JWT.
+  if (!user?.id) {
+    const p = decodeJwt(token);
+    user = p?.sub ? { id: p.sub, email: p.email, user_metadata: p.user_metadata || {} } : null;
+  }
+  if (!user?.id) {
     if (requireAuth) throw new Error("Not authenticated");
     return null;
   }
