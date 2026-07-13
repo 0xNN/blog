@@ -19,7 +19,8 @@ const CATEGORIES = [
 export default function Header() {
     const { theme, toggle } = useTheme();
     const { lang, setLang, t } = useLang();
-    const { user, logout } = useAuth();
+    const { user, profile, logout } = useAuth();
+    const canWrite = profile && ["owner", "editor", "author"].includes(profile.role);
     const [open, setOpen] = useState(false);
     const nav = useNavigate();
     const loc = useLocation();
@@ -129,16 +130,18 @@ export default function Header() {
                                         {t("Dashboard", "Dashboard")}
                                     </Button>
                                 </Link>
-                                <Link to={`${langPrefix}/editor/new`}>
-                                    <Button
-                                        data-testid="header-write"
-                                        size="sm"
-                                        className="rounded-full bg-[hsl(var(--accent))] hover:bg-[hsl(var(--accent))]/90 text-white"
-                                    >
-                                        <PenSquare className="h-3.5 w-3.5 mr-1.5" />
-                                        {t("Tulis", "Write")}
-                                    </Button>
-                                </Link>
+                                {canWrite && (
+                                    <Link to={`${langPrefix}/editor/new`}>
+                                        <Button
+                                            data-testid="header-write"
+                                            size="sm"
+                                            className="rounded-full bg-[hsl(var(--accent))] hover:bg-[hsl(var(--accent))]/90 text-white"
+                                        >
+                                            <PenSquare className="h-3.5 w-3.5 mr-1.5" />
+                                            {t("Tulis", "Write")}
+                                        </Button>
+                                    </Link>
+                                )}
                             </>
                         ) : (
                             <>

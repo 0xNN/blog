@@ -492,7 +492,8 @@ async function handleListAuthors() {
   const supabase = getSupabaseAdmin();
   const { data } = await supabase
     .from("user_profiles")
-    .select("id, name, slug, bio, avatar_url, twitter, github, website, created_at");
+    .select("id, name, slug, bio, avatar_url, twitter, github, website, created_at")
+    .in("role", ["owner", "editor", "author"]); // exclude readers from the authors list
   return jsonResponse(data || []);
 }
 
@@ -517,6 +518,7 @@ async function handleGetAuthor(req: Request, match: RegExpExecArray) {
 
 // POST /articles
 async function handleCreateArticle(req: Request, user: any) {
+  await requireRole(user, "owner", "editor", "author"); // readers cannot write articles
   const supabase = getSupabaseAdmin();
   const body = await req.json();
   const { data: profile } = await supabase
@@ -713,7 +715,7 @@ async function handleAnalytics(user: any) {
   const { count: totalComments } = await supabase
     .from("comments").select("*", { count: "exact", head: true });
   const { count: totalAuthors } = await supabase
-    .from("user_profiles").select("*", { count: "exact", head: true });
+    .from("user_profiles").select("*", { count: "exact", head: true }).neq("role", "reader");
 
   const { data: topArticles } = await supabase
     .from("articles")

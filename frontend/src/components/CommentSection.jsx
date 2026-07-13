@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { MessageSquare, Send, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import GoogleLoginButton from "@/components/GoogleLoginButton";
 
 function timeAgo(iso, lang) {
     const then = new Date(iso).getTime();
@@ -80,9 +81,22 @@ export default function CommentSection({ articleId }) {
                     </div>
                 </form>
             ) : (
-                <div className="mb-8 rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                    <Link to={`/${lang}/login`} className="text-[hsl(var(--accent))] font-semibold">{t("Masuk", "Log in")}</Link>{" "}
-                    {t("untuk ikut berkomentar", "to join the conversation")}
+                <div className="mb-8 rounded-2xl border border-dashed border-border p-6 text-center">
+                    <p className="text-sm text-muted-foreground mb-3">
+                        {t("Masuk untuk ikut berkomentar", "Sign in to join the conversation")}
+                    </p>
+                    <div className="max-w-xs mx-auto">
+                        <GoogleLoginButton
+                            testId="comment-google-btn"
+                            returnTo={typeof window !== "undefined" ? window.location.pathname : `/${lang}`}
+                        />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-3">
+                        {t("atau ", "or ")}
+                        <Link to={`/${lang}/login`} className="text-[hsl(var(--accent))] font-semibold">
+                            {t("masuk dengan email", "sign in with email")}
+                        </Link>
+                    </p>
                 </div>
             )}
 

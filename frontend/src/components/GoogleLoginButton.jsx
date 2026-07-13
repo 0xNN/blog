@@ -1,10 +1,14 @@
 import { supabase } from "@/lib/supabase";
 import { useLang } from "@/contexts/LanguageContext";
 
-export default function GoogleLoginButton({ testId = "google-login-btn" }) {
+export default function GoogleLoginButton({ testId = "google-login-btn", returnTo }) {
     const { lang, t } = useLang();
 
     const startGoogleAuth = async () => {
+        // Remember where to send the user back after OAuth (e.g. the article they were reading)
+        if (returnTo) {
+            try { localStorage.setItem("auth_return", returnTo); } catch { /* ignore */ }
+        }
         const redirectUrl = window.location.origin + `/${lang}/auth/callback`;
         await supabase.auth.signInWithOAuth({
             provider: "google",

@@ -27,7 +27,13 @@ export default function AuthCallback() {
             // Clear URL hash (Supabase puts tokens there)
             window.history.replaceState(null, "", window.location.pathname);
 
-            nav(`/${lang}/dashboard`, { replace: true });
+            // Return to where the user started (e.g. an article) if we stored it, else dashboard.
+            let dest = `/${lang}/dashboard`;
+            try {
+                const stored = localStorage.getItem("auth_return");
+                if (stored) { dest = stored; localStorage.removeItem("auth_return"); }
+            } catch { /* ignore */ }
+            nav(dest, { replace: true });
         };
 
         handleCallback();
