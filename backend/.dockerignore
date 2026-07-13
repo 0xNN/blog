@@ -1,9 +1,0 @@
-# Jangan ikutkan ke image (venv lokal Windows, cache, rahasia, test)
-.venv/
-venv/
-__pycache__/
-*.pyc
-.env
-.env.*
-tests/
-*.log
