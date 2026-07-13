@@ -44,8 +44,8 @@ Routing sudah diatur `vercel.json`:
 
 ### 2b. Backend (Railway / Render)
 1. New project dari repo → **Root Directory: `backend`**.
-2. **Build/Install command**: `pip install -r requirements-local.txt`
-   ⚠️ JANGAN pakai `requirements.txt` — di dalamnya ada `emergentintegrations` yang **tidak ada di PyPI** → build gagal. `requirements-local.txt` = versi tanpa paket itu (AI writer nonaktif, sisanya jalan).
+2. **Build/Install command**: `pip install -r requirements-prod.txt`
+   ⚠️ JANGAN pakai `requirements.txt` — ada `emergentintegrations` (tidak di PyPI) & `jq` (butuh kompilasi) → build gagal. `requirements-prod.txt` = set ramping hanya dependensi runtime (AI writer & upload gambar nonaktif; artikel/komentar/auth/newsletter/affiliate jalan).
 3. Start command (sudah ada juga di `backend/Procfile`):
    ```
    uvicorn server:app --host 0.0.0.0 --port $PORT
