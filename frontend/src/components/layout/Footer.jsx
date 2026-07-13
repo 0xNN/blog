@@ -57,7 +57,10 @@ export default function Footer() {
 
                 <div className="mt-14 pt-6 border-t border-border flex flex-col sm:flex-row justify-between gap-3 text-xs text-muted-foreground">
                     <div>© {new Date().getFullYear()} Developer Hub. {t("Dibangun untuk developer.", "Built for developers.")}</div>
-                    <div className="flex gap-4">
+                    <div className="flex flex-wrap gap-4">
+                        <Link to={`/${lang}/about`} className="hover:text-foreground" data-testid="footer-about">{t("Tentang", "About")}</Link>
+                        <Link to={`/${lang}/contact`} className="hover:text-foreground" data-testid="footer-contact">{t("Kontak", "Contact")}</Link>
+                        <Link to={`/${lang}/privacy`} className="hover:text-foreground" data-testid="footer-privacy">{t("Privasi", "Privacy")}</Link>
                         <Link to={`/${lang}/authors`} className="hover:text-foreground">{t("Kontributor", "Contributors")}</Link>
                         <a href="/api/ads.txt" className="hover:text-foreground">ads.txt</a>
                     </div>

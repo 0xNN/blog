@@ -19,6 +19,9 @@ import Dashboard from "@/pages/Dashboard";
 import EditorPage from "@/pages/EditorPage";
 import AcceptInvite from "@/pages/AcceptInvite";
 import AuthCallback from "@/pages/AuthCallback";
+import About from "@/pages/About";
+import Contact from "@/pages/Contact";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import NotFound from "@/pages/NotFound";
 
 import "@/index.css";
@@ -43,6 +46,9 @@ function AppShell() {
                     <Route path="editor/:id" element={<EditorPage />} />
                     <Route path="invite/:token" element={<AcceptInvite />} />
                     <Route path="auth/callback" element={<AuthCallback />} />
+                    <Route path="about" element={<About />} />
+                    <Route path="contact" element={<Contact />} />
+                    <Route path="privacy" element={<PrivacyPolicy />} />
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </main>
