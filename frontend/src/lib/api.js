@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 export const API_BASE = `${BACKEND_URL}/api`;
 
 const api = axios.create({
@@ -58,3 +58,12 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// ---------------- Affiliate ----------------
+export const getAffiliateLinks = (category) =>
+    api.get(`/affiliate-links${category ? `?category=${encodeURIComponent(category)}` : ""}`)
+        .then((r) => r.data);
+
+// Build a trackable redirect URL (server increments clicks)
+export const affiliateHref = (linkId, articleId) =>
+    `${API_BASE}/r/${linkId}${articleId ? `?article_id=${encodeURIComponent(articleId)}` : ""}`;

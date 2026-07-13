@@ -7,6 +7,7 @@ import StickyTOC from "@/components/StickyTOC";
 import ReadingProgress from "@/components/ReadingProgress";
 import CommentSection from "@/components/CommentSection";
 import RelatedArticles from "@/components/RelatedArticles";
+import AffiliateBox from "@/components/AffiliateBox";
 import NewsletterForm from "@/components/NewsletterForm";
 import AdSlot from "@/components/AdSlot";
 import { Clock, Eye, ArrowLeft, Twitter, Linkedin, Link as LinkIcon, Check } from "lucide-react";
@@ -180,6 +181,11 @@ export default function ArticleDetail() {
 
                 <div className="max-w-3xl">
                     <RelatedArticles articleId={article.id} />
+                    <AffiliateBox
+                        category={article.category_slug}
+                        articleId={article.id}
+                        title={t("Rekomendasi Tools", "Recommended Tools")}
+                    />
                 </div>
             </article>
         </>
