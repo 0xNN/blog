@@ -1,6 +1,4 @@
-[project]
-name = "developer-hub"
-verification_required = false
+project_id = "developer-hub"
 
 [auth]
 enabled = true
@@ -21,7 +19,7 @@ enable_signup = true
 enable_confirmations = false
 
 [auth.external.google]
-enabled = true
+enabled = false   # aktifkan + isi creds di Dashboard project (hosted) saat siap
 client_id = ""
 secret = ""
 
@@ -44,9 +42,6 @@ file_size_limit = "5MB"
 [edge_runtime]
 enabled = true
 policy = "per_worker"
-
-[functions]
-enabled = true
 
 # verify_jwt=false: allow anonymous requests to reach our code (public routes like
 # GET /articles, /categories, sitemap, affiliate redirect). Auth for protected routes
