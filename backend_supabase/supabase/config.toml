@@ -47,3 +47,15 @@ policy = "per_worker"
 
 [functions]
 enabled = true
+
+# verify_jwt=false: allow anonymous requests to reach our code (public routes like
+# GET /articles, /categories, sitemap, affiliate redirect). Auth for protected routes
+# is enforced IN-CODE via getUser()/requireRole() — do NOT rely on the platform gate.
+[functions.api]
+verify_jwt = false
+
+[functions.redirect]
+verify_jwt = false
+
+[functions.seo]
+verify_jwt = false
