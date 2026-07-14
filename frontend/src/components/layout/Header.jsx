@@ -6,6 +6,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import BrandMark from "@/components/BrandMark";
 
 const CATEGORIES = [
     { slug: "tutorial-coding", id: "Tutorial", en: "Tutorial" },
@@ -81,7 +82,7 @@ export default function Header() {
                         data-testid="header-logo"
                         className="flex items-center gap-2 font-heading font-black text-xl tracking-tight shrink-0"
                     >
-                        <span className="inline-flex items-center justify-center h-6 w-6 rounded-md bg-[hsl(var(--accent))] text-[10px] font-black text-white select-none">M</span>
+                        <BrandMark size={26} />
                         <span>MSN<span className="text-[hsl(var(--accent))]">Code</span></span>
                     </Link>
 

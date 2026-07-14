@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Github, Twitter, Rss } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import NewsletterForm from "@/components/NewsletterForm";
+import BrandMark from "@/components/BrandMark";
 
 const EXPLORE_LINKS = [
     { slug: "blog", labelId: "Semua Artikel", labelEn: "All Articles", testId: "footer-blog" },
@@ -24,7 +25,7 @@ export default function Footer() {
                             to={`/${lang}`}
                             className="inline-flex items-center gap-2 font-heading font-black text-xl tracking-tight"
                         >
-                            <span className="inline-flex items-center justify-center h-6 w-6 rounded-md bg-[hsl(var(--accent))] text-[10px] font-black text-white select-none">M</span>
+                            <BrandMark size={28} />
                             <span>MSN<span className="text-[hsl(var(--accent))]">Code</span></span>
                         </Link>
                         <p className="text-sm text-muted-foreground max-w-sm font-body leading-relaxed">
