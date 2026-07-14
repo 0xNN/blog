@@ -47,34 +47,46 @@ export default function Home() {
                 path={`/${lang}`}
                 title={lang === "id" ? "Blog Developer Bilingual (ID + EN)" : "The Bilingual Developer Blog"}
                 description={lang === "id"
-                    ? "Tutorial mendalam, solusi error real-world, dan cerita indie hacker untuk developer Indonesia & global."
+                    ? "Tutorial mendalam, solusi error real-world, dan cerita indie hacker untuk developer Indonesia dan global."
                     : "In-depth tutorials, real-world error fixes, and indie hacker stories for developers worldwide."}
             />
+
             {/* Hero */}
-            <section className="pt-16 pb-14 lg:pt-24 lg:pb-20 border-b border-border">
-                <div className="grid lg:grid-cols-12 gap-10 items-end">
-                    <div className="lg:col-span-7 space-y-6 animate-fade-in">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs font-mono">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--accent))] animate-pulse"></span>
-                            {t("Blog developer • Bilingual ID + EN", "Developer blog • Bilingual ID + EN")}
+            <section className="pt-16 pb-16 lg:pt-24 lg:pb-24 border-b border-border">
+                <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+                    <div className="lg:col-span-7 space-y-7">
+                        <div className="animate-fade-in" style={{ animationDelay: "0ms" }}>
+                            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-mono text-muted-foreground">
+                                <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--accent))] animate-pulse shrink-0" />
+                                {t("Blog developer · Bilingual ID + EN", "Developer blog · Bilingual ID + EN")}
+                            </div>
                         </div>
-                        <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight leading-[0.95]">
+                        <h1
+                            className="font-heading text-4xl sm:text-5xl lg:text-6xl xl:text-[4.25rem] font-black tracking-[-0.03em] leading-[1] animate-fade-up"
+                            style={{ animationDelay: "60ms" }}
+                        >
                             {t(
-                                <>Tulis kode. <br /><span className="text-[hsl(var(--accent))]">Baca cerita.</span><br />Naik level.</>,
-                                <>Ship code. <br /><span className="text-[hsl(var(--accent))]">Read stories.</span><br />Level up.</>
+                                <>Tulis kode.<br /><span className="text-[hsl(var(--accent))]">Baca cerita.</span><br />Naik level.</>,
+                                <>Ship code.<br /><span className="text-[hsl(var(--accent))]">Read stories.</span><br />Level up.</>
                             )}
                         </h1>
-                        <p className="font-body text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
+                        <p
+                            className="font-body text-lg md:text-xl text-muted-foreground max-w-lg leading-relaxed animate-fade-up"
+                            style={{ animationDelay: "120ms" }}
+                        >
                             {t(
-                                "Tutorial mendalam, solusi error real-world, dan cerita indie hacker — semua di satu tempat yang dibangun untuk developer.",
-                                "Deep tutorials, real-world error fixes, and indie hacker stories — all in one place built for developers."
+                                "Tutorial mendalam, solusi error real-world, dan cerita indie hacker. Semua di satu tempat, dibangun untuk developer.",
+                                "Deep tutorials, real-world error fixes, and indie hacker stories. All in one place, built for developers."
                             )}
                         </p>
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div
+                            className="flex flex-wrap items-center gap-3 animate-fade-up"
+                            style={{ animationDelay: "180ms" }}
+                        >
                             <Link
                                 to={`/${lang}/blog`}
                                 data-testid="hero-cta-explore"
-                                className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--accent))] text-white px-6 py-3 text-sm font-semibold hover:opacity-90 transition"
+                                className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--accent))] text-white px-6 py-2.5 text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all duration-200"
                             >
                                 {t("Jelajahi artikel", "Explore articles")}
                                 <ArrowRight className="h-4 w-4" />
@@ -82,26 +94,27 @@ export default function Home() {
                             <Link
                                 to={`/${lang}/register`}
                                 data-testid="hero-cta-write"
-                                className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-semibold hover:border-[hsl(var(--accent))] transition"
+                                className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-2.5 text-sm font-semibold hover:border-[hsl(var(--accent))] hover:text-[hsl(var(--accent))] active:scale-[0.98] transition-all duration-200"
                             >
                                 {t("Jadi kontributor", "Become a contributor")}
                             </Link>
                         </div>
                     </div>
 
-                    <div className="lg:col-span-5">
-                        <div className="rounded-3xl border border-border overflow-hidden bg-card">
+                    <div className="lg:col-span-5 animate-fade-in" style={{ animationDelay: "100ms" }}>
+                        <div className="relative rounded-2xl border border-border overflow-hidden bg-card shadow-elev-lg">
                             <img
                                 src="https://images.unsplash.com/photo-1542903660-eedba2cda473?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzF8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMHRlY2huaWNhbCUyMGNvZGUlMjBwYXR0ZXJufGVufDB8fHx8MTc4MzY2NTExMHww&ixlib=rb-4.1.0&q=85"
                                 alt="Abstract code pattern"
-                                className="w-full aspect-square object-cover"
+                                className="w-full aspect-[4/3] object-cover"
                             />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Featured hero article */}
+            {/* Featured / Editor's Picks */}
             {featured.length > 0 && (
                 <Reveal as="section" className="py-16">
                     <div className="eyebrow mb-6">{t("Pilihan Editor", "Editor's Picks")}</div>
@@ -110,11 +123,19 @@ export default function Home() {
             )}
 
             {/* Category pillars */}
-            <Reveal as="section" className="py-8">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="eyebrow">{t("11 Pilar Konten", "11 Content Pillars")}</div>
+            <Reveal as="section" className="py-12">
+                <div className="flex items-center justify-between mb-7">
+                    <h2 className="font-heading text-xl font-bold tracking-tight">
+                        {t("Topik", "Topics")}
+                    </h2>
+                    <Link
+                        to={`/${lang}/blog`}
+                        className="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+                    >
+                        {t("Lihat semua", "See all")} <ArrowRight className="h-3 w-3" />
+                    </Link>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     {PILLARS.map((p) => {
                         const Icon = p.icon;
                         return (
@@ -122,27 +143,26 @@ export default function Home() {
                                 key={p.slug}
                                 to={`/${lang}/category/${p.slug}`}
                                 data-testid={`pillar-${p.slug}`}
-                                className="group relative card-lift rounded-2xl border border-border bg-card overflow-hidden"
+                                className="group relative card-lift rounded-xl border border-border bg-card overflow-hidden"
                             >
-                                {/* Hover gradient wash */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--accent))]/[0.06] via-[hsl(var(--accent))]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                                {/* Hover tint */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--accent))]/[0.06] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none" />
 
-                                {/* Oversized decorative icon — clipped at corner for depth */}
+                                {/* Decorative background icon */}
                                 <Icon
                                     aria-hidden="true"
                                     strokeWidth={1}
-                                    className="absolute -bottom-4 -right-4 h-24 w-24 text-[hsl(var(--accent))]/[0.07] group-hover:text-[hsl(var(--accent))]/[0.15] transition-colors duration-500 pointer-events-none"
+                                    className="absolute -bottom-3 -right-3 h-20 w-20 text-[hsl(var(--accent))]/[0.07] group-hover:text-[hsl(var(--accent))]/[0.14] transition-colors duration-500 pointer-events-none"
                                 />
 
-                                <div className="relative p-5">
-                                    {/* Icon badge */}
-                                    <div className="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[hsl(var(--accent))]/10 group-hover:bg-[hsl(var(--accent))]/20 transition-colors duration-300">
-                                        <Icon className="h-[18px] w-[18px] text-[hsl(var(--accent))]" strokeWidth={2} />
+                                <div className="relative p-4 lg:p-5">
+                                    <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[hsl(var(--accent))]/10 group-hover:bg-[hsl(var(--accent))]/20 transition-colors duration-300">
+                                        <Icon className="h-4 w-4 text-[hsl(var(--accent))]" strokeWidth={2} />
                                     </div>
                                     <div className="font-heading font-bold leading-snug text-sm group-hover:text-[hsl(var(--accent))] transition-colors duration-200">
                                         {lang === "id" ? p.id : p.en}
                                     </div>
-                                    <div className="text-xs text-muted-foreground mt-1 font-body leading-relaxed">
+                                    <div className="text-xs text-muted-foreground mt-1 font-body leading-relaxed line-clamp-1">
                                         {lang === "id" ? p.desc_id : p.desc_en}
                                     </div>
                                 </div>
@@ -153,17 +173,21 @@ export default function Home() {
             </Reveal>
 
             {/* Latest + Popular */}
-            <Reveal as="section" className="py-16 grid lg:grid-cols-3 gap-10">
+            <Reveal as="section" className="py-12 grid lg:grid-cols-3 gap-10 lg:gap-14">
                 <div className="lg:col-span-2">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="font-heading text-2xl font-bold tracking-tight">
+                        <h2 className="font-heading text-xl font-bold tracking-tight">
                             {t("Artikel Terbaru", "Latest Articles")}
                         </h2>
-                        <Link to={`/${lang}/blog`} data-testid="see-all-articles" className="text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+                        <Link
+                            to={`/${lang}/blog`}
+                            data-testid="see-all-articles"
+                            className="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+                        >
                             {t("Lihat semua", "See all")} <ArrowRight className="h-3 w-3" />
                         </Link>
                     </div>
-                    <div className="grid sm:grid-cols-2 gap-6">
+                    <div className="grid sm:grid-cols-2 gap-5">
                         {latest
                             .filter((a) => !featuredIds.has(a.id))
                             .slice(0, 6)
@@ -173,32 +197,34 @@ export default function Home() {
                     </div>
                 </div>
 
-                <aside className="space-y-8">
+                <aside className="space-y-8 lg:pt-1">
                     <div>
-                        <div className="flex items-center gap-2 mb-4">
-                            <TrendingUp className="h-4 w-4 text-[hsl(var(--accent))]" />
-                            <h2 className="font-heading text-sm font-bold uppercase tracking-widest">{t("Populer", "Popular")}</h2>
+                        <div className="flex items-center gap-2 mb-5">
+                            <TrendingUp className="h-3.5 w-3.5 text-[hsl(var(--accent))]" />
+                            <h2 className="font-heading text-sm font-bold tracking-tight text-muted-foreground uppercase">
+                                {t("Populer", "Popular")}
+                            </h2>
                         </div>
-                        <ol className="space-y-4">
+                        <ol className="space-y-5">
                             {popular.map((a, i) => {
                                 const c = a[`content_${lang}`] || a.content_id;
                                 if (!c) return null;
                                 return (
-                                    <li key={`pop-${a.id}`}>
+                                    <li key={`pop-${a.id}`} className="border-b border-border pb-5 last:border-0 last:pb-0">
                                         <Link
                                             to={`/${lang}/blog/${c.slug}`}
                                             data-testid={`popular-${c.slug}`}
-                                            className="group flex gap-4"
+                                            className="group flex gap-4 items-start"
                                         >
-                                            <span className="font-heading text-3xl font-black text-muted-foreground/40 leading-none">
+                                            <span className="font-mono text-2xl font-bold text-muted-foreground/30 leading-none tabular-nums shrink-0 pt-0.5">
                                                 {String(i + 1).padStart(2, "0")}
                                             </span>
-                                            <div>
-                                                <div className="font-heading font-bold leading-snug group-hover:text-[hsl(var(--accent))] transition-colors">
+                                            <div className="min-w-0">
+                                                <div className="font-heading font-bold leading-snug text-sm group-hover:text-[hsl(var(--accent))] transition-colors line-clamp-2">
                                                     {c.title}
                                                 </div>
-                                                <div className="text-xs text-muted-foreground mt-1 font-body">
-                                                    {a.author_name} · {a.views} views
+                                                <div className="text-xs text-muted-foreground mt-1.5 font-mono">
+                                                    {a.author_name} · {(a.views || 0).toLocaleString()} views
                                                 </div>
                                             </div>
                                         </Link>
@@ -208,14 +234,14 @@ export default function Home() {
                         </ol>
                     </div>
 
-                    <div className="rounded-2xl border border-border p-6 bg-card">
-                        <h3 className="font-heading text-lg font-bold mb-2 tracking-tight">
+                    <div className="rounded-xl border border-border p-5 bg-card">
+                        <h3 className="font-heading text-base font-bold mb-1.5 tracking-tight">
                             {t("Newsletter mingguan", "Weekly newsletter")}
                         </h3>
                         <p className="text-sm text-muted-foreground font-body mb-4 leading-relaxed">
                             {t(
                                 "Tips dev, tools baru, dan cerita indie hacker langsung ke inbox kamu.",
-                                "Dev tips, new tools, and indie hacker stories delivered to your inbox."
+                                "Dev tips, new tools, and indie hacker stories to your inbox."
                             )}
                         </p>
                         <NewsletterForm compact />

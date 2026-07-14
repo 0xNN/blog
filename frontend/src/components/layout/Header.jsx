@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation, useNavigate, useMatch } from "react-router-dom";
 import { Moon, Sun, Menu, X, Search, PenSquare, LogOut, Layout } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import api from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -26,25 +26,34 @@ export default function Header() {
     const loc = useLocation();
 
     const [scrolled, setScrolled] = useState(false);
+    const rafRef = useRef(null);
+
     useEffect(() => {
-        const onScroll = () => setScrolled(window.scrollY > 8);
+        const onScroll = () => {
+            if (rafRef.current) return;
+            rafRef.current = requestAnimationFrame(() => {
+                setScrolled(window.scrollY > 8);
+                rafRef.current = null;
+            });
+        };
         onScroll();
         window.addEventListener("scroll", onScroll, { passive: true });
-        return () => window.removeEventListener("scroll", onScroll);
+        return () => {
+            window.removeEventListener("scroll", onScroll);
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        };
     }, []);
 
     const langPrefix = `/${lang}`;
     const articleMatch = useMatch(`/${lang}/blog/:slug`);
     const currentArticleSlug = articleMatch?.params?.slug;
 
-    const handleLangSwitch = async (newLang) => {
+    const handleLangSwitch = useCallback(async (newLang) => {
         if (newLang === lang) return;
         setLang(newLang);
 
-        // If we're on an article page, try to map to the translated slug
         if (currentArticleSlug) {
             try {
-                // Load the article (with fallback across languages) to get its ID
                 const { data: article } = await api.get(
                     `/articles/${currentArticleSlug}?lang=${lang}`
                 );
@@ -55,36 +64,35 @@ export default function Header() {
                     return;
                 }
             } catch {
-                /* fall through to naive path swap */
+                /* fall through */
             }
         }
 
-        // Default: swap the URL prefix
         const path = loc.pathname.replace(/^\/(id|en)(\/|$)/, `/${newLang}$2`);
         nav(path || `/${newLang}`);
-    };
+    }, [lang, currentArticleSlug, loc.pathname, nav, setLang]);
 
     return (
-        <header className={`sticky top-0 z-40 border-b border-border backdrop-blur-xl transition-all duration-300 ${scrolled ? "bg-background/90 shadow-elev" : "bg-background/70"}`}>
+        <header className={`sticky top-0 z-40 border-b border-border backdrop-blur-xl transition-all duration-300 ${scrolled ? "bg-background/92 shadow-elev" : "bg-background/70"}`}>
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="flex h-16 items-center justify-between gap-6">
                     <Link
                         to={`/${lang}`}
                         data-testid="header-logo"
-                        className="flex items-center gap-2 font-heading font-black text-xl tracking-tight"
+                        className="flex items-center gap-2 font-heading font-black text-xl tracking-tight shrink-0"
                     >
-                        <span className="inline-flex items-center justify-center h-6 w-6 rounded-lg bg-[hsl(var(--accent))] text-[10px] font-black text-white">M</span>
+                        <span className="inline-flex items-center justify-center h-6 w-6 rounded-md bg-[hsl(var(--accent))] text-[10px] font-black text-white select-none">M</span>
                         <span>MSN<span className="text-[hsl(var(--accent))]">Code</span></span>
                     </Link>
 
-                    <nav className="hidden lg:flex items-center gap-6 text-sm font-medium">
+                    <nav className="hidden lg:flex items-center gap-5 text-sm font-medium">
                         {CATEGORIES.map((c) => (
                             <NavLink
                                 key={c.slug}
                                 to={`${langPrefix}/category/${c.slug}`}
                                 data-testid={`nav-cat-${c.slug}`}
                                 className={({ isActive }) =>
-                                    `link-underline transition-colors ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`
+                                    `link-underline transition-colors duration-200 ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`
                                 }
                             >
                                 {lang === "id" ? c.id : c.en}
@@ -92,25 +100,25 @@ export default function Header() {
                         ))}
                     </nav>
 
-                    <div className="flex items-center gap-2">
-                        {/* language switcher */}
+                    <div className="flex items-center gap-1.5">
+                        {/* Language switcher */}
                         <div className="hidden sm:flex items-center rounded-full border border-border p-0.5 text-xs font-semibold">
                             <button
                                 data-testid="lang-id"
                                 onClick={() => handleLangSwitch("id")}
-                                className={`px-2.5 py-1 rounded-full transition ${lang === "id" ? "bg-[hsl(var(--accent))] text-white" : "text-muted-foreground"}`}
+                                className={`px-2.5 py-1 rounded-full transition-colors duration-200 ${lang === "id" ? "bg-[hsl(var(--accent))] text-white" : "text-muted-foreground hover:text-foreground"}`}
                             >ID</button>
                             <button
                                 data-testid="lang-en"
                                 onClick={() => handleLangSwitch("en")}
-                                className={`px-2.5 py-1 rounded-full transition ${lang === "en" ? "bg-[hsl(var(--accent))] text-white" : "text-muted-foreground"}`}
+                                className={`px-2.5 py-1 rounded-full transition-colors duration-200 ${lang === "en" ? "bg-[hsl(var(--accent))] text-white" : "text-muted-foreground hover:text-foreground"}`}
                             >EN</button>
                         </div>
 
                         <button
                             data-testid="header-search"
                             onClick={() => nav(`${langPrefix}/search`)}
-                            className="p-2 rounded-full hover:bg-muted transition"
+                            className="p-2 rounded-full hover:bg-muted transition-colors duration-200"
                             aria-label="Search"
                         >
                             <Search className="h-4 w-4" />
@@ -119,7 +127,7 @@ export default function Header() {
                         <button
                             data-testid="theme-toggle"
                             onClick={toggle}
-                            className="p-2 rounded-full hover:bg-muted transition"
+                            className="p-2 rounded-full hover:bg-muted transition-colors duration-200"
                             aria-label="Toggle theme"
                         >
                             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -170,8 +178,10 @@ export default function Header() {
 
                         <button
                             data-testid="mobile-menu-toggle"
-                            className="lg:hidden p-2 rounded-full hover:bg-muted"
+                            className="lg:hidden p-2 rounded-full hover:bg-muted transition-colors duration-200"
                             onClick={() => setOpen(!open)}
+                            aria-label={open ? "Close menu" : "Open menu"}
+                            aria-expanded={open}
                         >
                             {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
                         </button>
@@ -179,13 +189,27 @@ export default function Header() {
                 </div>
 
                 {open && (
-                    <nav className="lg:hidden pb-4 flex flex-col gap-2 border-t border-border pt-4">
+                    <nav className="lg:hidden pb-4 flex flex-col border-t border-border pt-3 animate-fade-in">
+                        {/* Language switcher for mobile */}
+                        <div className="flex items-center gap-2 px-1 py-2 mb-1">
+                            <span className="text-xs text-muted-foreground font-mono">{t("Bahasa:", "Language:")}</span>
+                            <button
+                                onClick={() => { handleLangSwitch("id"); setOpen(false); }}
+                                className={`text-xs px-2.5 py-1 rounded-full border border-border transition-colors duration-200 ${lang === "id" ? "bg-[hsl(var(--accent))] text-white border-transparent" : "text-muted-foreground"}`}
+                            >ID</button>
+                            <button
+                                onClick={() => { handleLangSwitch("en"); setOpen(false); }}
+                                className={`text-xs px-2.5 py-1 rounded-full border border-border transition-colors duration-200 ${lang === "en" ? "bg-[hsl(var(--accent))] text-white border-transparent" : "text-muted-foreground"}`}
+                            >EN</button>
+                        </div>
                         {CATEGORIES.map((c) => (
                             <NavLink
                                 key={c.slug}
                                 to={`${langPrefix}/category/${c.slug}`}
                                 onClick={() => setOpen(false)}
-                                className="text-sm py-2 text-muted-foreground hover:text-foreground"
+                                className={({ isActive }) =>
+                                    `text-sm py-2.5 px-1 border-b border-border last:border-0 transition-colors duration-200 ${isActive ? "text-[hsl(var(--accent))] font-semibold" : "text-muted-foreground hover:text-foreground"}`
+                                }
                                 data-testid={`mobile-nav-${c.slug}`}
                             >
                                 {lang === "id" ? c.id : c.en}
@@ -195,7 +219,7 @@ export default function Header() {
                             <button
                                 data-testid="mobile-logout"
                                 onClick={() => { logout(); setOpen(false); }}
-                                className="text-sm py-2 text-left text-muted-foreground hover:text-foreground flex items-center gap-2"
+                                className="text-sm py-2.5 px-1 text-left text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors duration-200"
                             >
                                 <LogOut className="h-4 w-4" /> Logout
                             </button>

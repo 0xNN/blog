@@ -26,7 +26,7 @@
     --border: 240 6% 90%;
     --border-strong: 240 6% 82%;
     --input: 240 6% 90%;
-    --ring: 220 100% 50%;
+    --ring: 170 60% 40%;
     --radius: 0.75rem;
 
     --font-heading: 'Cabinet Grotesk', ui-sans-serif, system-ui, sans-serif;
@@ -60,7 +60,7 @@
     --border: 240 5% 16%;
     --border-strong: 240 6% 26%;
     --input: 240 5% 18%;
-    --ring: 220 100% 62%;
+    --ring: 170 60% 42%;
 
     --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.4);
     --shadow-md: 0 12px 32px -14px hsl(0 0% 0% / 0.6);
@@ -145,8 +145,13 @@ body {
     will-change: transform;
 }
 .card-lift:hover {
-    border-color: hsl(var(--accent) / 0.5);
-    box-shadow: 0 8px 28px -8px hsl(var(--accent) / 0.12), var(--shadow-md);
+    transform: translateY(-3px);
+    border-color: hsl(var(--accent) / 0.45);
+    box-shadow: 0 12px 36px -10px hsl(var(--accent) / 0.14), var(--shadow-md);
+}
+.card-lift:active {
+    transform: translateY(-1px) scale(0.99);
+    transition-duration: 0.1s;
 }
 
 /* Animated link underline */
@@ -343,14 +348,19 @@ body {
 
 /* --- Motion --- */
 @keyframes fade-up {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 @keyframes shimmer {
     from { background-position: 200% 0; }
     to { background-position: -200% 0; }
 }
-.animate-fade-up { animation: fade-up 0.6s var(--ease) both; }
+.animate-fade-up { animation: fade-up 0.65s var(--ease) both; }
+.animate-fade-in { animation: fade-in 0.5s var(--ease) both; }
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
