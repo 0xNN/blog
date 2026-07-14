@@ -143,7 +143,7 @@ export default function AdminPanel() {
                             value={form.email}
                             onChange={(e) => setForm({ ...form, email: e.target.value })}
                             data-testid="invite-form-email"
-                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                            className="form-input"
                         />
                         <input
                             required
@@ -151,20 +151,20 @@ export default function AdminPanel() {
                             value={form.name}
                             onChange={(e) => setForm({ ...form, name: e.target.value })}
                             data-testid="invite-form-name"
-                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                            className="form-input"
                         />
                         <select
                             value={form.role}
                             onChange={(e) => setForm({ ...form, role: e.target.value })}
                             data-testid="invite-form-role"
-                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                            className="form-select"
                         >
                             {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
                         </select>
                         <button
                             type="submit"
                             data-testid="invite-form-submit"
-                            className="rounded-lg bg-[hsl(var(--accent))] text-white px-4 py-2 text-sm font-semibold hover:opacity-90 inline-flex items-center gap-1.5"
+                            className="rounded-full bg-[hsl(var(--accent))] text-white px-4 py-2 text-sm font-semibold hover:opacity-90 inline-flex items-center gap-1.5 whitespace-nowrap"
                         >
                             <UserPlus className="h-3.5 w-3.5" /> {t("Undang", "Invite")}
                         </button>
@@ -251,26 +251,26 @@ export default function AdminPanel() {
                     <form onSubmit={createLink} className="p-4 border-b border-border grid gap-2 sm:grid-cols-2">
                         <input required placeholder={t("Nama (mis. Hostinger)", "Name (e.g. Hostinger)")} value={affForm.name}
                             onChange={(e) => setAffForm({ ...affForm, name: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm" data-testid="aff-name" />
+                            className="form-input" data-testid="aff-name" />
                         <input required type="url" placeholder={t("URL afiliasi (pakai kode referral Anda)", "Affiliate URL (your referral code)")} value={affForm.url}
                             onChange={(e) => setAffForm({ ...affForm, url: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm" data-testid="aff-url" />
+                            className="form-input" data-testid="aff-url" />
                         <input placeholder={t("Merchant", "Merchant")} value={affForm.merchant}
                             onChange={(e) => setAffForm({ ...affForm, merchant: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm" data-testid="aff-merchant" />
+                            className="form-input" data-testid="aff-merchant" />
                         <select value={affForm.category_slug}
                             onChange={(e) => setAffForm({ ...affForm, category_slug: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm" data-testid="aff-category">
+                            className="form-select" data-testid="aff-category">
                             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                         </select>
                         <input placeholder={t("Deskripsi singkat", "Short description")} value={affForm.description}
                             onChange={(e) => setAffForm({ ...affForm, description: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm sm:col-span-2" data-testid="aff-desc" />
+                            className="form-input sm:col-span-2" data-testid="aff-desc" />
                         <input placeholder={t("URL gambar (opsional)", "Image URL (optional)")} value={affForm.image_url}
                             onChange={(e) => setAffForm({ ...affForm, image_url: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-border bg-background text-sm sm:col-span-2" data-testid="aff-image" />
+                            className="form-input sm:col-span-2" data-testid="aff-image" />
                         <button type="submit" data-testid="aff-submit"
-                            className="rounded-lg bg-[hsl(var(--accent))] text-white px-4 py-2 text-sm font-semibold hover:opacity-90 inline-flex items-center justify-center gap-1.5 sm:col-span-2">
+                            className="rounded-full bg-[hsl(var(--accent))] text-white px-4 py-2 text-sm font-semibold hover:opacity-90 inline-flex items-center justify-center gap-1.5 sm:col-span-2">
                             <Plus className="h-3.5 w-3.5" /> {t("Tambah link", "Add link")}
                         </button>
                     </form>

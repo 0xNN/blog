@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { Save, Eye, Sparkles, Image as ImageIcon, Languages, CheckCircle2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const CATEGORIES = [
     "tutorial-coding", "error-solutions", "tools-review", "developer-finance",
@@ -302,7 +303,7 @@ export default function EditorPage() {
                                 data-testid="editor-category"
                                 value={meta.category_slug}
                                 onChange={(e) => setMeta({ ...meta, category_slug: e.target.value })}
-                                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                                className="form-select mt-1"
                             >
                                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                             </select>
@@ -334,14 +335,28 @@ export default function EditorPage() {
                             </div>
                             {meta.cover_image && <img src={meta.cover_image} alt="cover" className="w-full mt-2 rounded-lg" />}
                         </div>
-                        <label className="flex items-center gap-2 text-sm">
-                            <input type="checkbox" checked={meta.ads_enabled} onChange={(e) => setMeta({ ...meta, ads_enabled: e.target.checked })} data-testid="editor-ads-enabled" />
-                            {t("Aktifkan iklan", "Enable ads")}
-                        </label>
-                        <label className="flex items-center gap-2 text-sm">
-                            <input type="checkbox" checked={meta.featured} onChange={(e) => setMeta({ ...meta, featured: e.target.checked })} data-testid="editor-featured" />
-                            {t("Featured di homepage", "Feature on homepage")}
-                        </label>
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="editor-ads-enabled"
+                                data-testid="editor-ads-enabled"
+                                checked={meta.ads_enabled}
+                                onCheckedChange={(v) => setMeta({ ...meta, ads_enabled: !!v })}
+                            />
+                            <label htmlFor="editor-ads-enabled" className="text-sm cursor-pointer select-none">
+                                {t("Aktifkan iklan", "Enable ads")}
+                            </label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="editor-featured"
+                                data-testid="editor-featured"
+                                checked={meta.featured}
+                                onCheckedChange={(v) => setMeta({ ...meta, featured: !!v })}
+                            />
+                            <label htmlFor="editor-featured" className="text-sm cursor-pointer select-none">
+                                {t("Featured di homepage", "Feature on homepage")}
+                            </label>
+                        </div>
                     </div>
 
                     <div className="rounded-2xl border border-border p-4 space-y-2">
