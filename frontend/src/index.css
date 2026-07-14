@@ -145,9 +145,8 @@ body {
     will-change: transform;
 }
 .card-lift:hover {
-    transform: translateY(-2px);
     border-color: hsl(var(--accent) / 0.5);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 8px 28px -8px hsl(var(--accent) / 0.12), var(--shadow-md);
 }
 
 /* Animated link underline */
