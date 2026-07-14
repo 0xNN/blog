@@ -34,7 +34,9 @@ export default function FeaturedCarousel({ articles = [] }) {
 
     return (
         <div className="relative">
-            <div className="relative overflow-hidden rounded-2xl pt-px" ref={emblaRef}>
+            {/* py-2 gives the hover-lift (translateY -4px) + accent border room so
+                overflow-hidden doesn't clip the card's top/bottom edge */}
+            <div className="relative overflow-hidden py-2 -my-2" ref={emblaRef}>
                 <div className="flex -ml-5">
                     {articles.map((a) => (
                         <div key={a.id} className="min-w-0 flex-[0_0_88%] md:flex-[0_0_90%] pl-5">
