@@ -143,7 +143,6 @@ export default function Header() {
                                         <Button
                                             data-testid="header-write"
                                             size="sm"
-                                            className="rounded-full bg-[hsl(var(--accent))] hover:bg-[hsl(var(--accent))]/90 text-white"
                                         >
                                             <PenSquare className="h-3.5 w-3.5 mr-1.5" />
                                             {t("Tulis", "Write")}
@@ -162,7 +161,6 @@ export default function Header() {
                                     <Button
                                         data-testid="header-register"
                                         size="sm"
-                                        className="rounded-full bg-[hsl(var(--accent))] text-white hover:opacity-90"
                                     >
                                         {t("Daftar", "Sign up")}
                                     </Button>

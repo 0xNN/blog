@@ -7,7 +7,7 @@ export function ThemeProvider({ children }) {
         if (typeof window === "undefined") return "dark";
         const stored = localStorage.getItem("devhub-theme");
         if (stored) return stored;
-        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "dark";
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     });
 
     useEffect(() => {
