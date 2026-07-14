@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, TrendingUp } from "lucide-react";
+import { ArrowRight, TrendingUp, Code2, Bug, Wrench, DollarSign, Sparkles, Bot, GraduationCap, Zap, Rocket, Network } from "lucide-react";
 import api from "@/lib/api";
 import { useLang } from "@/contexts/LanguageContext";
 import ArticleCard from "@/components/ArticleCard";
@@ -13,17 +13,17 @@ import FeaturedCarousel from "@/components/FeaturedCarousel";
 const FEATURED_COUNT = 3;
 
 const PILLARS = [
-    { slug: "tutorial-coding", id: "Tutorial Coding", en: "Coding Tutorials", desc_id: "Panduan langkah demi langkah", desc_en: "Step-by-step guides" },
-    { slug: "error-solutions", id: "Fix Error", en: "Error Solutions", desc_id: "Solusi cepat untuk bug", desc_en: "Fast fixes for bugs" },
-    { slug: "tools-review", id: "Review Tools", en: "Tools Review", desc_id: "Ulasan tools developer", desc_en: "Dev tool reviews" },
-    { slug: "developer-finance", id: "Finansial Dev", en: "Dev Finance", desc_id: "Kelola keuangan dev", desc_en: "Manage dev money" },
-    { slug: "ai-prompt", id: "AI & Prompt", en: "AI & Prompts", desc_id: "AI untuk developer", desc_en: "AI for developers" },
-    { slug: "ai-agents", id: "AI Agents", en: "AI Agents", desc_id: "Bangun agent otonom", desc_en: "Build autonomous agents" },
-    { slug: "career-interview", id: "Karir & Interview", en: "Career", desc_id: "Naik level karir", desc_en: "Level up your career" },
-    { slug: "nocode-lowcode", id: "No-Code", en: "No-Code", desc_id: "Bangun tanpa koding", desc_en: "Build without code" },
-    { slug: "saas-indie", id: "SaaS & Indie", en: "SaaS & Indie", desc_id: "Journey indie hacker", desc_en: "Indie hacker journey" },
-    { slug: "blockchain-crypto", id: "Blockchain & Crypto", en: "Blockchain & Crypto", desc_id: "Web3, smart contracts, DeFi", desc_en: "Web3, smart contracts, DeFi" },
-    { slug: "trading", id: "Trading", en: "Trading", desc_id: "Stock, Crypto, Forex", desc_en: "Stock, Crypto, Forex" },
+    { slug: "tutorial-coding",   icon: Code2,        id: "Tutorial Coding",     en: "Coding Tutorials",    desc_id: "Panduan langkah demi langkah", desc_en: "Step-by-step guides" },
+    { slug: "error-solutions",   icon: Bug,          id: "Fix Error",           en: "Error Solutions",     desc_id: "Solusi cepat untuk bug",       desc_en: "Fast fixes for bugs" },
+    { slug: "tools-review",      icon: Wrench,       id: "Review Tools",        en: "Tools Review",        desc_id: "Ulasan tools developer",        desc_en: "Dev tool reviews" },
+    { slug: "developer-finance", icon: DollarSign,   id: "Finansial Dev",       en: "Dev Finance",         desc_id: "Kelola keuangan dev",           desc_en: "Manage dev money" },
+    { slug: "ai-prompt",         icon: Sparkles,     id: "AI & Prompt",         en: "AI & Prompts",        desc_id: "AI untuk developer",            desc_en: "AI for developers" },
+    { slug: "ai-agents",         icon: Bot,          id: "AI Agents",           en: "AI Agents",           desc_id: "Bangun agent otonom",           desc_en: "Build autonomous agents" },
+    { slug: "career-interview",  icon: GraduationCap,id: "Karir & Interview",   en: "Career",              desc_id: "Naik level karir",              desc_en: "Level up your career" },
+    { slug: "nocode-lowcode",    icon: Zap,          id: "No-Code",             en: "No-Code",             desc_id: "Bangun tanpa koding",           desc_en: "Build without code" },
+    { slug: "saas-indie",        icon: Rocket,       id: "SaaS & Indie",        en: "SaaS & Indie",        desc_id: "Journey indie hacker",          desc_en: "Indie hacker journey" },
+    { slug: "blockchain-crypto", icon: Network,      id: "Blockchain & Crypto", en: "Blockchain & Crypto", desc_id: "Web3, smart contracts, DeFi",  desc_en: "Web3, smart contracts, DeFi" },
+    { slug: "trading",           icon: TrendingUp,   id: "Trading",             en: "Trading",             desc_id: "Stock, Crypto, Forex",          desc_en: "Stock, Crypto, Forex" },
 ];
 
 export default function Home() {
@@ -114,22 +114,41 @@ export default function Home() {
                 <div className="flex items-center justify-between mb-6">
                     <div className="eyebrow">{t("11 Pilar Konten", "11 Content Pillars")}</div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {PILLARS.map((p) => (
-                        <Link
-                            key={p.slug}
-                            to={`/${lang}/category/${p.slug}`}
-                            data-testid={`pillar-${p.slug}`}
-                            className="group card-lift rounded-2xl border border-border p-5 bg-card"
-                        >
-                            <div className="font-heading font-bold group-hover:text-[hsl(var(--accent))] transition-colors">
-                                {lang === "id" ? p.id : p.en}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1 font-body">
-                                {lang === "id" ? p.desc_id : p.desc_en}
-                            </div>
-                        </Link>
-                    ))}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {PILLARS.map((p) => {
+                        const Icon = p.icon;
+                        return (
+                            <Link
+                                key={p.slug}
+                                to={`/${lang}/category/${p.slug}`}
+                                data-testid={`pillar-${p.slug}`}
+                                className="group relative card-lift rounded-2xl border border-border bg-card overflow-hidden"
+                            >
+                                {/* Hover gradient wash */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--accent))]/[0.06] via-[hsl(var(--accent))]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                                {/* Oversized decorative icon — clipped at corner for depth */}
+                                <Icon
+                                    aria-hidden="true"
+                                    strokeWidth={1}
+                                    className="absolute -bottom-4 -right-4 h-24 w-24 text-[hsl(var(--accent))]/[0.07] group-hover:text-[hsl(var(--accent))]/[0.15] transition-colors duration-500 pointer-events-none"
+                                />
+
+                                <div className="relative p-5">
+                                    {/* Icon badge */}
+                                    <div className="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[hsl(var(--accent))]/10 group-hover:bg-[hsl(var(--accent))]/20 transition-colors duration-300">
+                                        <Icon className="h-[18px] w-[18px] text-[hsl(var(--accent))]" strokeWidth={2} />
+                                    </div>
+                                    <div className="font-heading font-bold leading-snug text-sm group-hover:text-[hsl(var(--accent))] transition-colors duration-200">
+                                        {lang === "id" ? p.id : p.en}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-1 font-body leading-relaxed">
+                                        {lang === "id" ? p.desc_id : p.desc_en}
+                                    </div>
+                                </div>
+                            </Link>
+                        );
+                    })}
                 </div>
             </Reveal>
 
