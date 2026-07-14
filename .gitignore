@@ -111,3 +111,6 @@ defender_result.txt
 # Keep env TEMPLATES tracked despite the .env / *.env / .env.* rules above
 !.env.example
 !**/.env.example
+
+articles
+backend_supabase/seed_articles_new.sql
