@@ -7,6 +7,10 @@ import ArticleCard from "@/components/ArticleCard";
 import NewsletterForm from "@/components/NewsletterForm";
 import { PageSeo } from "@/components/Seo";
 import Reveal from "@/components/Reveal";
+import FeaturedCarousel from "@/components/FeaturedCarousel";
+
+// How many editor's-pick articles the featured carousel shows. Change freely.
+const FEATURED_COUNT = 3;
 
 const PILLARS = [
     { slug: "tutorial-coding", id: "Tutorial Coding", en: "Coding Tutorials", desc_id: "Panduan langkah demi langkah", desc_en: "Step-by-step guides" },
@@ -29,13 +33,12 @@ export default function Home() {
     const [popular, setPopular] = useState([]);
 
     useEffect(() => {
-        api.get(`/articles/featured?lang=${lang}`).then((r) => setFeatured(r.data)).catch(() => {});
-        api.get(`/articles?lang=${lang}&limit=6`).then((r) => setLatest(r.data)).catch(() => {});
+        api.get(`/articles/featured?lang=${lang}&limit=${FEATURED_COUNT}`).then((r) => setFeatured(r.data)).catch(() => {});
+        api.get(`/articles?lang=${lang}&limit=9`).then((r) => setLatest(r.data)).catch(() => {});
         api.get(`/articles/popular?lang=${lang}&limit=4`).then((r) => setPopular(r.data)).catch(() => {});
     }, [lang]);
 
-    const heroArticle = featured[0];
-    const secondaryFeatured = featured.slice(1, 3);
+    const featuredIds = new Set(featured.map((a) => a.id));
 
     return (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -99,10 +102,10 @@ export default function Home() {
             </section>
 
             {/* Featured hero article */}
-            {heroArticle && (
+            {featured.length > 0 && (
                 <Reveal as="section" className="py-16">
-                    <div className="eyebrow mb-6">{t("Pilihan Editor", "Featured")}</div>
-                    <ArticleCard article={heroArticle} variant="hero" />
+                    <div className="eyebrow mb-6">{t("Pilihan Editor", "Editor's Picks")}</div>
+                    <FeaturedCarousel articles={featured} />
                 </Reveal>
             )}
 
@@ -142,18 +145,12 @@ export default function Home() {
                         </Link>
                     </div>
                     <div className="grid sm:grid-cols-2 gap-6">
-                        {(() => {
-                            const merged = [...secondaryFeatured, ...latest];
-                            const seen = new Set();
-                            const unique = merged.filter((a) => {
-                                if (seen.has(a.id)) return false;
-                                seen.add(a.id);
-                                return true;
-                            });
-                            return unique.slice(0, 6).map((a) => (
+                        {latest
+                            .filter((a) => !featuredIds.has(a.id))
+                            .slice(0, 6)
+                            .map((a) => (
                                 <ArticleCard key={`latest-${a.id}`} article={a} />
-                            ));
-                        })()}
+                            ))}
                     </div>
                 </div>
 
