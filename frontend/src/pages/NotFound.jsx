@@ -12,7 +12,7 @@ export default function NotFound() {
             <p className="font-body text-lg text-muted-foreground mb-8">
                 {t("Sepertinya kamu tersesat di antara baris kode.", "Looks like you got lost between the lines of code.")}
             </p>
-            <Link to={`/${lang}`} className="inline-flex rounded-full bg-foreground text-background px-6 py-3 text-sm font-semibold hover:opacity-90 transition">
+            <Link to={`/${lang}`} className="inline-flex rounded-full bg-[hsl(var(--accent))] text-white px-6 py-3 text-sm font-semibold hover:opacity-90 transition">
                 {t("Kembali ke beranda", "Back to home")}
             </Link>
         </div>

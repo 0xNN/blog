@@ -18,8 +18,8 @@ export default function Contact() {
                 path={`/${lang}/contact`}
                 title={t("Kontak", "Contact")}
                 description={t(
-                    "Hubungi tim Developer Hub — pertanyaan, kerja sama, atau menjadi penulis tamu.",
-                    "Get in touch with the Developer Hub team — questions, partnerships, or guest writing."
+                    "Hubungi tim MSNCode — pertanyaan, kerja sama, atau menjadi penulis tamu.",
+                    "Get in touch with the MSNCode team — questions, partnerships, or guest writing."
                 )}
             />
             <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">

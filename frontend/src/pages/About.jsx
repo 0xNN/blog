@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { PageSeo } from "@/components/Seo";
 
-const SITE_NAME = "Developer Hub";
+const SITE_NAME = "MSNCode";
 
 export default function About() {
     const { lang, t } = useLang();
@@ -14,8 +14,8 @@ export default function About() {
                 path={`/${lang}/about`}
                 title={t("Tentang Kami", "About")}
                 description={t(
-                    "Tentang Developer Hub — blog bilingual (ID + EN) untuk developer: tutorial, solusi error, karir, dan indie hacking.",
-                    "About Developer Hub — a bilingual (ID + EN) blog for developers: tutorials, error fixes, career, and indie hacking."
+                    "Tentang MSNCode — blog bilingual (ID + EN) untuk developer: tutorial, solusi error, karir, dan indie hacking.",
+                    "About MSNCode — a bilingual (ID + EN) blog for developers: tutorials, error fixes, career, and indie hacking."
                 )}
             />
             <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">

@@ -11,8 +11,8 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
                     <div className="md:col-span-2 space-y-4">
                         <div className="flex items-center gap-2 font-heading font-black text-xl">
-                            <span className="inline-block h-2.5 w-2.5 rounded-full bg-[hsl(var(--accent))]"></span>
-                            devhub<span className="text-[hsl(var(--accent))]">.</span>
+                            <span className="inline-flex items-center justify-center h-6 w-6 rounded-lg bg-[hsl(var(--accent))] text-[10px] font-black text-white">M</span>
+                            MSN<span className="text-[hsl(var(--accent))]">Code</span>
                         </div>
                         <p className="text-sm text-muted-foreground max-w-sm font-body leading-relaxed">
                             {t(
@@ -56,7 +56,7 @@ export default function Footer() {
                 </div>
 
                 <div className="mt-14 pt-6 border-t border-border flex flex-col sm:flex-row justify-between gap-3 text-xs text-muted-foreground">
-                    <div>© {new Date().getFullYear()} Developer Hub. {t("Dibangun untuk developer.", "Built for developers.")}</div>
+                    <div>© {new Date().getFullYear()} MSNCode. {t("Dibangun untuk developer.", "Built for developers.")}</div>
                     <div className="flex flex-wrap gap-4">
                         <Link to={`/${lang}/about`} className="hover:text-foreground" data-testid="footer-about">{t("Tentang", "About")}</Link>
                         <Link to={`/${lang}/contact`} className="hover:text-foreground" data-testid="footer-contact">{t("Kontak", "Contact")}</Link>

@@ -73,8 +73,8 @@ export default function Header() {
                         data-testid="header-logo"
                         className="flex items-center gap-2 font-heading font-black text-xl tracking-tight"
                     >
-                        <span className="inline-block h-2.5 w-2.5 rounded-full bg-[hsl(var(--accent))]"></span>
-                        <span>devhub<span className="text-[hsl(var(--accent))]">.</span></span>
+                        <span className="inline-flex items-center justify-center h-6 w-6 rounded-lg bg-[hsl(var(--accent))] text-[10px] font-black text-white">M</span>
+                        <span>MSN<span className="text-[hsl(var(--accent))]">Code</span></span>
                     </Link>
 
                     <nav className="hidden lg:flex items-center gap-6 text-sm font-medium">
@@ -162,7 +162,7 @@ export default function Header() {
                                     <Button
                                         data-testid="header-register"
                                         size="sm"
-                                        className="rounded-full bg-foreground text-background hover:opacity-90"
+                                        className="rounded-full bg-[hsl(var(--accent))] text-white hover:opacity-90"
                                     >
                                         {t("Daftar", "Sign up")}
                                     </Button>

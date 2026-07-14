@@ -75,7 +75,7 @@ export default function Login() {
                     type="submit"
                     data-testid="login-submit"
                     disabled={loading}
-                    className="w-full py-3 rounded-xl bg-foreground text-background font-semibold hover:opacity-90 transition disabled:opacity-60"
+                    className="w-full py-3 rounded-xl bg-[hsl(var(--accent))] text-white font-semibold hover:opacity-90 transition disabled:opacity-60"
                 >
                     {loading ? "…" : t("Masuk", "Log in")}
                 </button>

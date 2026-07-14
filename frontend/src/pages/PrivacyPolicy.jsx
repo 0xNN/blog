@@ -3,7 +3,7 @@ import { PageSeo } from "@/components/Seo";
 
 // Ganti dengan email kontak publik Anda.
 const CONTACT_EMAIL = "hello@msncode.dev";
-const SITE_NAME = "Developer Hub";
+const SITE_NAME = "MSNCode";
 
 function Section({ title, children }) {
     return (

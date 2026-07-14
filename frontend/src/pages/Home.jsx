@@ -74,7 +74,7 @@ export default function Home() {
                             <Link
                                 to={`/${lang}/blog`}
                                 data-testid="hero-cta-explore"
-                                className="inline-flex items-center gap-2 rounded-full bg-foreground text-background px-6 py-3 text-sm font-semibold hover:opacity-90 transition"
+                                className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--accent))] text-white px-6 py-3 text-sm font-semibold hover:opacity-90 transition"
                             >
                                 {t("Jelajahi artikel", "Explore articles")}
                                 <ArrowRight className="h-4 w-4" />

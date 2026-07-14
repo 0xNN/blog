@@ -3,7 +3,7 @@ import { useEffect } from "react";
 // Absolute origin of the SITE (frontend), used for canonical/OG/JSON-LD URLs.
 // In prod this resolves to https://blog.msncode.dev automatically.
 const SITE_URL = import.meta.env.VITE_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
-const SITE_NAME = "Developer Hub";
+const SITE_NAME = "MSNCode";
 
 /**
  * Imperatively manages <head> tags for SEO.

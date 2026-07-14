@@ -92,7 +92,7 @@ export default function AcceptInvite() {
                     />
                 </div>
                 {error && <div className="text-sm text-destructive" data-testid="invite-error">{error}</div>}
-                <button type="submit" data-testid="invite-submit" className="w-full py-3 rounded-xl bg-foreground text-background font-semibold hover:opacity-90 transition">
+                <button type="submit" data-testid="invite-submit" className="w-full py-3 rounded-xl bg-[hsl(var(--accent))] text-white font-semibold hover:opacity-90 transition">
                     {t("Terima undangan", "Accept invitation")}
                 </button>
             </form>
