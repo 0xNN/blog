@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { useEffect } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -26,6 +26,14 @@ import NotFound from "@/pages/NotFound";
 
 import "@/index.css";
 
+// Remount EditorPage whenever :id changes (e.g. /editor/abc -> /editor/new) so
+// all form state & refs reset. Without this, React reuses the instance and the
+// previous article's content lingers into a "new" article.
+function EditorRoute() {
+    const { id } = useParams();
+    return <EditorPage key={id} />;
+}
+
 function AppShell() {
     return (
         <>
@@ -43,7 +51,7 @@ function AppShell() {
                     <Route path="login" element={<Login />} />
                     <Route path="register" element={<Register />} />
                     <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="editor/:id" element={<EditorPage />} />
+                    <Route path="editor/:id" element={<EditorRoute />} />
                     <Route path="invite/:token" element={<AcceptInvite />} />
                     <Route path="auth/callback" element={<AuthCallback />} />
                     <Route path="about" element={<About />} />
