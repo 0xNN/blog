@@ -4,12 +4,13 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import ArticleCard from "@/components/ArticleCard";
 
 /**
- * Modern featured carousel — one hero card per slide, with dot indicators and
- * prev/next controls. Count is whatever `articles` you pass (dynamic).
+ * Modern featured carousel with a "peek": each slide is ~88% wide so the next
+ * slide shows at the right edge, softly blurred + faded as a hint of more.
+ * Count is whatever `articles` you pass (dynamic).
  */
 export default function FeaturedCarousel({ articles = [] }) {
     const single = articles.length <= 1;
-    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: !single, align: "start" });
+    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: !single, align: "start", containScroll: false });
     const [selected, setSelected] = useState(0);
     const [snaps, setSnaps] = useState([]);
 
@@ -26,21 +27,27 @@ export default function FeaturedCarousel({ articles = [] }) {
 
     if (!articles.length) return null;
 
-    // Single item — no carousel chrome needed.
+    // Single item — no carousel chrome / peek needed.
     if (single) {
         return <ArticleCard article={articles[0]} variant="hero" />;
     }
 
     return (
         <div className="relative">
-            <div className="overflow-hidden rounded-2xl" ref={emblaRef}>
-                <div className="flex">
+            <div className="relative overflow-hidden rounded-2xl" ref={emblaRef}>
+                <div className="flex -ml-5">
                     {articles.map((a) => (
-                        <div key={a.id} className="min-w-0 flex-[0_0_100%]">
+                        <div key={a.id} className="min-w-0 flex-[0_0_88%] md:flex-[0_0_90%] pl-5">
                             <ArticleCard article={a} variant="hero" />
                         </div>
                     ))}
                 </div>
+
+                {/* Peek hint: blur + color fade over the sliver of the next slide */}
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-0 right-0 z-10 w-[16%] backdrop-blur-[2px] bg-gradient-to-l from-background/70 to-transparent [mask-image:linear-gradient(to_left,black_50%,transparent)] [-webkit-mask-image:linear-gradient(to_left,black_50%,transparent)]"
+                />
             </div>
 
             <div className="flex items-center justify-between mt-5">
