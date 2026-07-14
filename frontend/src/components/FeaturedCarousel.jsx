@@ -34,7 +34,7 @@ export default function FeaturedCarousel({ articles = [] }) {
 
     return (
         <div className="relative">
-            <div className="relative overflow-hidden rounded-2xl" ref={emblaRef}>
+            <div className="relative overflow-hidden rounded-2xl pt-px" ref={emblaRef}>
                 <div className="flex -ml-5">
                     {articles.map((a) => (
                         <div key={a.id} className="min-w-0 flex-[0_0_88%] md:flex-[0_0_90%] pl-5">
