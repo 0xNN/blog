@@ -213,8 +213,8 @@ export default function EditorPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-border">
                 <div className="flex items-center gap-2">
                     <div className="flex items-center rounded-full border border-border p-0.5 text-xs font-semibold">
-                        <button data-testid="editor-tab-id" onClick={() => setTab("id")} className={`px-3 py-1.5 rounded-full ${tab === "id" ? "bg-foreground text-background" : "text-muted-foreground"}`}>Bahasa Indonesia</button>
-                        <button data-testid="editor-tab-en" onClick={() => setTab("en")} className={`px-3 py-1.5 rounded-full ${tab === "en" ? "bg-foreground text-background" : "text-muted-foreground"}`}>English</button>
+                        <button data-testid="editor-tab-id" onClick={() => setTab("id")} className={`px-3 py-1.5 rounded-full ${tab === "id" ? "bg-[hsl(var(--accent))] text-white" : "text-muted-foreground"}`}>Bahasa Indonesia</button>
+                        <button data-testid="editor-tab-en" onClick={() => setTab("en")} className={`px-3 py-1.5 rounded-full ${tab === "en" ? "bg-[hsl(var(--accent))] text-white" : "text-muted-foreground"}`}>English</button>
                     </div>
                     <button data-testid="editor-preview-toggle" onClick={() => setPreview(!preview)} className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold inline-flex items-center gap-1.5">
                         <Eye className="h-3.5 w-3.5" /> {preview ? t("Edit", "Edit") : "Preview"}

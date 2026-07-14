@@ -98,12 +98,12 @@ export default function Header() {
                             <button
                                 data-testid="lang-id"
                                 onClick={() => handleLangSwitch("id")}
-                                className={`px-2.5 py-1 rounded-full transition ${lang === "id" ? "bg-foreground text-background" : "text-muted-foreground"}`}
+                                className={`px-2.5 py-1 rounded-full transition ${lang === "id" ? "bg-[hsl(var(--accent))] text-white" : "text-muted-foreground"}`}
                             >ID</button>
                             <button
                                 data-testid="lang-en"
                                 onClick={() => handleLangSwitch("en")}
-                                className={`px-2.5 py-1 rounded-full transition ${lang === "en" ? "bg-foreground text-background" : "text-muted-foreground"}`}
+                                className={`px-2.5 py-1 rounded-full transition ${lang === "en" ? "bg-[hsl(var(--accent))] text-white" : "text-muted-foreground"}`}
                             >EN</button>
                         </div>
 

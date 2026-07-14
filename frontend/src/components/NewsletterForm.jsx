@@ -55,7 +55,7 @@ export default function NewsletterForm({ compact = false }) {
                 type="submit"
                 data-testid="newsletter-submit"
                 disabled={status === "loading"}
-                className="rounded-full px-4 py-2.5 bg-foreground text-background text-sm font-semibold hover:opacity-90 transition disabled:opacity-60"
+                className="rounded-full px-4 py-2.5 bg-[hsl(var(--accent))] text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-60"
             >
                 {status === "loading" ? "…" : t("Subscribe", "Subscribe")}
             </button>

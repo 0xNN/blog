@@ -125,7 +125,7 @@ export default function AdminPanel() {
                             key={k}
                             onClick={() => setTab(k === "moderation" ? "comments" : k)}
                             data-testid={`admin-tab-${k === "moderation" ? "moderation" : k}`}
-                            className={`px-3 py-1.5 rounded-full transition ${(tab === k || (k === "moderation" && tab === "comments")) ? "bg-foreground text-background" : "text-muted-foreground"}`}
+                            className={`px-3 py-1.5 rounded-full transition ${(tab === k || (k === "moderation" && tab === "comments")) ? "bg-[hsl(var(--accent))] text-white" : "text-muted-foreground"}`}
                         >
                             {label}
                         </button>
