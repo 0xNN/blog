@@ -41,20 +41,33 @@ async function handleSitemap() {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const { data: articles } = await supabase
     .from("articles")
-    .select("content_id, content_en")
-    .eq("status", "published");
+    .select("content_id, content_en, published_at, updated_at")
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
 
-  const urls: string[] = [];
+  const today = new Date().toISOString().split("T")[0];
+
+  const urlEntries: string[] = [];
+
+  function addUrl(loc: string, opts: { priority?: string; changefreq?: string; lastmod?: string } = {}) {
+    const { priority = "0.5", changefreq = "weekly", lastmod = today } = opts;
+    urlEntries.push(
+      `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`
+    );
+  }
+
   for (const lang of ["id", "en"]) {
-    urls.push(`${BASE_URL}/${lang}`);
+    addUrl(`${BASE_URL}/${lang}`, { priority: "1.0", changefreq: "daily" });
+    addUrl(`${BASE_URL}/${lang}/blog`, { priority: "0.9", changefreq: "daily" });
     for (const c of CATEGORIES) {
-      urls.push(`${BASE_URL}/${lang}/category/${c.slug}`);
+      addUrl(`${BASE_URL}/${lang}/category/${c.slug}`, { priority: "0.7", changefreq: "weekly" });
     }
     if (articles) {
       for (const a of articles) {
         const content = a[`content_${lang}` as keyof typeof a] as any;
         if (content?.slug) {
-          urls.push(`${BASE_URL}/${lang}/blog/${content.slug}`);
+          const lastmod = (a.updated_at || a.published_at || today).split("T")[0];
+          addUrl(`${BASE_URL}/${lang}/blog/${content.slug}`, { priority: "0.8", changefreq: "monthly", lastmod });
         }
       }
     }
@@ -63,7 +76,7 @@ async function handleSitemap() {
   const body = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...urls.map((u) => `  <url><loc>${u}</loc></url>`),
+    ...urlEntries,
     "</urlset>",
   ].join("\n");
 
@@ -118,5 +131,5 @@ async function handleRss(lang: string) {
 }
 
 function handleAdsTxt() {
-  return textResponse("# google.com, pub-XXXXXXX, DIRECT, f08c47fec0942fa0\n");
+  return textResponse("google.com, pub-1997030082284033, DIRECT, f08c47fec0942fa0\n");
 }
