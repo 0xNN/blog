@@ -30,6 +30,11 @@ export default function ArticleCard({ article, variant = "default" }) {
                 </div>
             )}
             <div className={`flex flex-col flex-1 p-5 ${isLarge ? "md:p-8 md:justify-center" : ""}`}>
+                {article.category_slug && !article.cover_image && (
+                    <span className="inline-block mb-3 text-[10px] font-mono font-medium uppercase tracking-[0.15em] text-muted-foreground">
+                        {article.category_slug.replace(/-/g, " ")}
+                    </span>
+                )}
                 <h3 className={`font-heading font-bold leading-[1.15] tracking-tight mb-2 transition-colors group-hover:text-[hsl(var(--accent))] ${isLarge ? "text-2xl sm:text-3xl md:text-4xl" : "text-lg"}`}>
                     {content.title}
                 </h3>
@@ -40,9 +45,9 @@ export default function ArticleCard({ article, variant = "default" }) {
                 )}
                 <div className="mt-auto flex items-center gap-2.5 text-xs text-muted-foreground pt-1">
                     <span className="font-semibold text-foreground truncate">{article.author_name}</span>
-                    <span className="text-border-strong">·</span>
+                    <span className="text-muted-foreground/40">·</span>
                     <span className="inline-flex items-center gap-1 font-mono"><Clock className="h-3 w-3" />{article.reading_time || 3}{t("m", "m")}</span>
-                    <span className="text-border-strong">·</span>
+                    <span className="text-muted-foreground/40">·</span>
                     <span className="inline-flex items-center gap-1 font-mono"><Eye className="h-3 w-3" />{(article.views || 0).toLocaleString()}</span>
                     <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground/50 -translate-x-1 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 group-hover:text-[hsl(var(--accent))]" />
                 </div>

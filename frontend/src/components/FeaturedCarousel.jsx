@@ -43,10 +43,10 @@ export default function FeaturedCarousel({ articles = [] }) {
                     ))}
                 </div>
 
-                {/* Peek hint: blur + color fade over the sliver of the next slide */}
+                {/* Peek hint: soft gradient over the next slide edge */}
                 <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-y-0 right-0 z-10 w-[16%] backdrop-blur-[2px] bg-gradient-to-l from-background/70 to-transparent [mask-image:linear-gradient(to_left,black_50%,transparent)] [-webkit-mask-image:linear-gradient(to_left,black_50%,transparent)]"
+                    className="pointer-events-none absolute inset-y-0 right-0 z-10 w-[14%] bg-gradient-to-l from-background via-background/80 to-transparent"
                 />
             </div>
 
