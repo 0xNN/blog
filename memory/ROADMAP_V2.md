@@ -1,8 +1,8 @@
 # Developer Hub — Roadmap Monetisasi & Growth (Versi Agent)
 
 > Turunan dari MONETIZATION_ROADMAP.md, disesuaikan dengan kondisi app saat ini:
-> CRA SPA (client-side), backend FastAPI + MongoDB sudah matang, auth/SEO/AI sudah ada,
-> AdSense masih placeholder, belum ada sistem affiliate/email automation.
+> Vite SPA (client-side), backend Supabase Edge Functions + PostgreSQL sudah matang, auth/SEO/AI sudah ada,
+> AdSense masih placeholder, affiliate system sudah diimplementasikan (tapi disclosure belum).
 >
 > Prinsip: **passive income = traffic × RPM × compounding − biaya maintenance.**
 > Constraint nyata: AdSense butuh approval (bisa berbulan-bulan / ditolak), Next.js = XL.
@@ -22,11 +22,12 @@ Legenda effort: **S** <1 hari · **M** 1–3 hari · **L** 4–10 hari · **XL**
 
 ## FASE 1 — Revenue Paling Cepat (minggu 1–2)
 
-### 1.2 Affiliate Link System **(M–L)** ⭐ START DI SINI
-- Backend: model `affiliate_links` (`id`, `name`, `url`, `merchant`, `category_slug`, `clicks`).
-- Endpoint: CRUD (owner/editor) + `GET /r/{link_id}` redirect + increment klik (`rel="sponsored nofollow"`).
-- Frontend: `AffiliateBox` / tabel perbandingan tools + disclosure otomatis.
-- Tracking klik per artikel.
+### 1.2 Affiliate Link System **(M–L)** ⭐ START DI SINI ✅ SUDAH DIIMPLEMENTASIKAN
+- [x] Backend: tabel `affiliate_links` (`id`, `name`, `url`, `merchant`, `category_slug`, `description`, `image_url`, `clicks`, `active`).
+- [x] Endpoint: CRUD (owner only via `service_role`) + `GET /r/{link_id}` redirect + increment klik. Handler di `redirect/index.ts`.
+- [x] Frontend: `AffiliateBox.jsx` menampilkan link per kategori di halaman artikel. `affiliateHref()` di `api.js` bangun URL same-origin `/r/`.
+- [x] Tracking klik per artikel (`affiliate_clicks` table dengan `link_id`, `article_id`, `ip`).
+- [ ] Disclosure otomatis ("mengandung link afiliasi") — belum ada, perlu ditambahkan.
 - **Kenapa dulu:** tak perlu approval, ROI sering > AdSense, langsung measurable.
 
 ### 0a SSR Meta Shim **(M)** — KERJAKAN PARalel
@@ -62,7 +63,7 @@ Legenda effort: **S** <1 hari · **M** 1–3 hari · **L** 4–10 hari · **XL**
 - **Acceptance:** tiap artikel ≥3 internal link relevan otomatis.
 
 ### 2.3 Pagination + Caching **(M)**
-- Cursor/offset pagination di `/articles` (ganti `?limit=100`).
+- Cursor/offset pagination di `/articles` (ganti `?limit=50`, max 100).
 - CDN cache halaman publik (otomatis kalau sudah SSR/ISR).
 - **Acceptance:** list tak lag saat artikel >100; biaya DB stabil.
 
@@ -73,7 +74,7 @@ Legenda effort: **S** <1 hari · **M** 1–3 hari · **L** 4–10 hari · **XL**
 ### 0b Migrasi Next.js (App Router) **(XL)**
 - `generateMetadata()` + ISR (`revalidate`).
 - Lighthouse SEO ≥95, LCP <2.5s, "View Source" bukan cuma `<div id=root>`.
-- Backend FastAPI tetap sebagai API.
+- Backend Supabase Edge Functions tetap sebagai API.
 
 ### 3.1 Sponsorship **(L)**
 - Model `sponsored_slots` + masa aktif + badge "Sponsored".

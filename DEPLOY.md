@@ -1,94 +1,181 @@
 # Deploy Guide — Developer Hub
 
-Target arsitektur (semua di bawah 1 domain `msncode.dev`, browser hanya bicara ke frontend → tanpa CORS, cookie login jalan):
+Target arsitektur (semua di bawah 1 domain `msncode.dev`, browser hanya bicara ke frontend → tanpa CORS):
 
 | Bagian | Subdomain | Host | Biaya |
 |---|---|---|---|
-| Frontend (Vite) | `blog.msncode.dev` | Vercel / Cloudflare Pages | Gratis |
-| Backend (FastAPI) | `api.msncode.dev` | Railway / Render / Fly | Free tier |
-| Database | — | MongoDB Atlas **M0** | Gratis |
+| Frontend (Vite + React 19) | `blog.msncode.dev` | Vercel | Gratis (Hobby) / Pro |
+| Backend (Edge Functions) | — | Supabase (hosted) | Free tier |
+| Database (PostgreSQL) | — | Supabase (hosted) | Free tier |
+| Storage (blog-images) | — | Supabase Storage | Free tier |
 
-Frontend mem-proxy `/api/*` ke backend via `frontend/vercel.json`, jadi dari sisi browser semuanya **sama-origin** (`blog.msncode.dev`).
+Frontend mem-proxy `/api/*`, `/r/*`, `/ads.txt`, `/sitemap.xml`, `/rss.xml` ke Supabase Edge Functions via `frontend/vercel.json`, jadi dari sisi browser semuanya **sama-origin** (`blog.msncode.dev`).
 
 ---
 
-## FASE 1 — Deploy Frontend ke `blog.msncode.dev`
+## FASE 1 — Setup Supabase Project
 
-> Situs sudah bisa tampil (halaman About/Contact/Privacy siap untuk AdSense). Data belum muncul sampai backend (Fase 2) hidup — itu normal.
+1. Buat project baru di [supabase.com](https://supabase.com) → pilih Free tier.
+2. Catat **Project URL** dan **anon/publishable key** (Settings → API).
+3. Catat **service_role key** (Settings → API) — JANGAN pernah taruh di frontend.
+4. Set site URL ke `https://blog.msncode.dev` (Settings → Auth → URL Configuration).
+5. Tambah redirect URLs (Settings → Auth → URL Configuration):
+   - `https://blog.msncode.dev`
+   - `https://blog.msncode.dev/id/auth/callback`
+   - `https://blog.msncode.dev/en/auth/callback`
+6. (Opsional) Aktifkan Google OAuth: Settings → Auth → Providers → Google → isi Client ID + Secret dari Google Cloud Console.
+
+---
+
+## FASE 2 — Deploy Database Schema & Seed
+
+1. **Jalankan migrations** — push semua file di `backend_supabase/supabase/migrations/` ke Supabase:
+   ```bash
+   cd backend_supabase
+   supabase db push
+   ```
+   Atau copy-paste isi file SQL ke Supabase Dashboard → SQL Editor:
+   - `20260713000000_init.sql` — skema lengkap (tabel, index, RLS, trigger)
+   - `20260713120000_reader_role_comments_lockdown.sql` — role reader + lockdown
+
+2. **Seed data (opsional, untuk testing)** — copy-paste isi `supabase/seed.sql` ke SQL Editor. Ini membuat 3 user demo + 3 artikel + 1 affiliate link + 1 subscriber.
+   > JANGAN jalankan `seed.sql` di production dengan data asli. Gunakan signup normal di app.
+
+3. **Seed articles tambahan (opsional)** — `backend_supabase/seed_articles_new.sql`, jalankan manual via SQL Editor.
+
+---
+
+## FASE 3 — Deploy Edge Functions
+
+Setiap Edge Function deploy terpisah ke Supabase:
+
+```bash
+cd backend_supabase
+
+# Login ke Supabase CLI (sekali saja)
+supabase login
+
+# Link ke project (sekali saja)
+supabase link --project-ref YOUR_PROJECT_REF
+
+# Deploy ketiga function
+supabase functions deploy api
+supabase functions deploy redirect
+supabase functions deploy seo
+```
+
+Atau bisa juga via Supabase Dashboard → Edge Functions → Deploy (copy-paste kode dari `backend_supabase/supabase/functions/`).
+
+---
+
+## FASE 4 — Set Edge Function Secrets
+
+Di Supabase Dashboard → Edge Functions → Secrets (atau via `supabase secrets set`):
+
+```bash
+supabase secrets set \
+  SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co \
+  SUPABASE_SERVICE_ROLE_KEY=your-service-role-key \
+  SUPABASE_ANON_KEY=your-anon-key \
+  FRONTEND_URL=https://blog.msncode.dev \
+  EMERGENT_LLM_KEY=your-anthropic-api-key \
+  RESEND_API_KEY=your-resend-key-optional
+```
+
+| Key | Wajib? | Kegunaan |
+|---|---|---|
+| `SUPABASE_URL` | Ya | Project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Ya | Bypass RLS untuk operasi admin/role elevation |
+| `SUPABASE_ANON_KEY` | Ya | Validasi JWT user di `getUser()` |
+| `FRONTEND_URL` | Ya | URL frontend untuk invite links, sitemap, RSS |
+| `EMERGENT_LLM_KEY` | Opsional | Anthropic API key untuk AI generate (`POST /api/ai/generate`) |
+| `RESEND_API_KEY` | Opsional | Email service (newsletter, invites) |
+
+> Catatan: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, dan `SUPABASE_ANON_KEY` biasanya sudah auto-injected oleh Supabase platform. Hanya perlu set manual untuk local dev atau jika override diperlukan.
+
+---
+
+## FASE 5 — Deploy Frontend ke Vercel
 
 1. **Import repo ke Vercel** → New Project → pilih repo ini.
 2. **Root Directory: `frontend`** (WAJIB — repo ini monorepo backend+frontend).
-3. Framework otomatis terdeteksi **Vite**. Build command `pnpm build`, Output `dist` (default, karena `pnpm-lock.yaml` sudah ada Vercel pakai pnpm).
-4. Deploy. Anda dapat URL `*.vercel.app` → pastikan situs tampil.
-5. **Tambah domain**: project → Settings → Domains → `blog.msncode.dev`.
-6. **Di Porkbun** (DNS `msncode.dev`) tambah record — sama pola dengan `www` Anda:
+3. Framework otomatis terdeteksi **Vite**. Build command `npm run build`, Output `dist`.
+   - Install command sudah di-set di `vercel.json`: `npm install --legacy-peer-deps` (wajib karena React 19 peer conflicts).
+4. **Environment variables** (Vercel → Settings → Environment Variables):
+   | Key | Value |
+   |---|---|
+   | `VITE_SUPABASE_URL` | `https://YOUR_PROJECT_REF.supabase.co` |
+   | `VITE_SUPABASE_ANON_KEY` | anon/publishable key dari Supabase |
+   | `VITE_EDGE_FUNCTIONS_URL` | **kosong** (Vercel proxy menangani) atau `https://YOUR_PROJECT_REF.functions.supabase.co` |
+   | `VITE_SITE_URL` | `https://blog.msncode.dev` (opsional, default `window.location.origin`) |
+5. Deploy. Anda dapat URL `*.vercel.app` → pastikan situs tampil.
+6. **Tambah domain**: project → Settings → Domains → `blog.msncode.dev`.
+7. **Di Porkbun** (DNS `msncode.dev`) tambah record:
    ```
    Type: CNAME   Host: blog   Answer: cname.vercel-dns.com   TTL: 600
    ```
-7. Tunggu propagasi. Vercel provision **SSL gratis** otomatis (`.dev` = HTTPS wajib).
+8. Tunggu propagasi. Vercel provision **SSL gratis** otomatis (`.dev` = HTTPS wajib).
 
-Routing sudah diatur `vercel.json`:
-- `/api/*`, `/ads.txt`, `/sitemap.xml`, `/rss.xml` → di-proxy ke `https://api.msncode.dev`
-- sisanya → `index.html` (SPA, biar `/id/blog/...` tidak 404)
+### Vercel rewrite rules (`frontend/vercel.json`)
 
-> Env di production: **tidak perlu set apa-apa**. `VITE_BACKEND_URL` kosong → API jadi `/api` (di-proxy). `SITE_URL` untuk SEO otomatis pakai `window.location.origin`.
+Sudah dikonfigurasi di repo:
+- `/api/*` → `https://YOUR_PROJECT.functions.supabase.co/api/*`
+- `/r/*` → `https://YOUR_PROJECT.functions.supabase.co/redirect/*`
+- `/ads.txt` → `https://YOUR_PROJECT.functions.supabase.co/seo/ads.txt`
+- `/sitemap.xml` → `https://YOUR_PROJECT.functions.supabase.co/seo/sitemap.xml`
+- `/rss.xml` → `https://YOUR_PROJECT.functions.supabase.co/seo/rss.xml`
+- `/(.*)` → `/index.html` (SPA fallback biar `/id/blog/...` tidak 404)
 
----
-
-## FASE 2 — Deploy Backend ke `api.msncode.dev`
-
-### 2a. MongoDB Atlas (M0 gratis)
-1. Buat cluster M0 → Database Access: buat user+password.
-2. Network Access: allow `0.0.0.0/0` (atau IP host backend).
-3. Ambil connection string: `mongodb+srv://USER:PASS@cluster.mongodb.net`.
-
-### 2b. Backend (Railway / Render)
-1. New project dari repo → **Root Directory: `backend`**.
-2. **Build/Install command**: `pip install -r requirements-prod.txt`
-   ⚠️ JANGAN pakai `requirements.txt` — ada `emergentintegrations` (tidak di PyPI) & `jq` (butuh kompilasi) → build gagal. `requirements-prod.txt` = set ramping hanya dependensi runtime (AI writer & upload gambar nonaktif; artikel/komentar/auth/newsletter/affiliate jalan).
-3. Start command (sudah ada juga di `backend/Procfile`):
-   ```
-   uvicorn server:app --host 0.0.0.0 --port $PORT
-   ```
-4. **Environment variables**:
-   | Key | Value |
-   |---|---|
-   | `MONGO_URL` | connection string Atlas |
-   | `DB_NAME` | `developer_hub` |
-   | `JWT_SECRET` | string acak (`python -c "import secrets;print(secrets.token_urlsafe(48))"`) |
-   | `FRONTEND_URL` | `https://blog.msncode.dev` |
-   | `EMERGENT_LLM_KEY` | (opsional — kosongkan, lihat catatan) |
-   | `RESEND_API_KEY` | (opsional — kosongkan → email jadi no-op) |
-5. **Custom domain** backend → `api.msncode.dev`. Di Porkbun tambah CNAME `api` → target yang diberi Railway/Render. (SSL otomatis.)
-
-### 2c. Cookie auth di production (disarankan)
-Backend saat ini set cookie `secure=False` (`backend/auth.py > set_auth_cookies`). Lewat proxy sama-origin sebenarnya sudah jalan, tapi untuk produksi HTTPS sebaiknya `secure=True`. Ubah bila perlu.
+> Ganti `YOUR_PROJECT` di `vercel.json` dengan project ref Supabase Anda sebelum deploy, atau set via env var jika menggunakan Vercel's environment variable substitution.
 
 ---
 
-## ⚠️ Fitur "Emergent-only" (tidak jalan di luar platform Emergent)
-Backend ini dibuat di platform Emergent. Beberapa fitur bergantung layanan Emergent dan **tidak akan berfungsi di self-host** tanpa diganti:
+## Local Development
 
-| Fitur | Status self-host | Solusi nanti |
-|---|---|---|
-| AI writer (`ai_service.py`) | ❌ butuh `emergentintegrations` + Emergent gateway | Port ke Anthropic API langsung (`anthropic` SDK, model `claude-sonnet-4-x`) |
-| Upload gambar (`storage.py`) | ❌ Emergent Object Storage | Ganti ke S3/Cloudflare R2; sementara pakai cover via URL |
-| Login Google (`/auth/emergent/session`) | ❌ Emergent OAuth | Pakai Google OAuth langsung, atau cukup email/password |
+### Backend (local Supabase)
+```bash
+cd backend_supabase
+supabase start                    # start local Supabase (Postgres, Auth, Storage, Edge Functions)
+supabase db reset                 # reset DB + run migrations + seed.sql
+supabase functions serve api --env-file ./supabase/.env
+```
+Local URLs: Studio `http://localhost:54323`, API `http://localhost:54321`, Auth `http://localhost:54322`.
 
-**Yang JALAN normal di self-host:** login email/password (JWT), artikel (CRUD/baca), komentar, newsletter (Resend), **fitur affiliate**, RSS/sitemap/ads.txt. Cukup untuk blog + monetisasi afiliasi.
+### Frontend (local Vite)
+```bash
+cd frontend
+npm install --legacy-peer-deps
+npm run dev                       # Vite dev server on port 3000
+```
 
-> Karena `ai_service.py` sudah lazy-import, backend tetap hidup walau `emergentintegrations` tidak terpasang (endpoint AI akan balas error 500 bila dipanggil — aman diabaikan). Jadi untuk Fase 2 pakai `requirements.txt` apa adanya; kalau `emergentintegrations` gagal di-install di host, hapus baris itu atau pakai `requirements-local.txt`.
+Frontend `.env` untuk local dev:
+```
+VITE_SUPABASE_URL=http://localhost:54321
+VITE_SUPABASE_ANON_KEY=your-local-anon-key
+VITE_EDGE_FUNCTIONS_URL=http://localhost:54321
+```
 
 ---
 
 ## Catatan biaya / komersial
-- Subdomain `blog.msncode.dev` & `api.msncode.dev`: **gratis** (Anda sudah bayar domain di Porkbun).
-- **Vercel Hobby = non-komersial** per ToS. Begitu pasang iklan/afiliasi (komersial), pindahkan frontend ke **Cloudflare Pages** (free, boleh komersial) atau upgrade **Vercel Pro**. Untuk tahap tes sekarang, Hobby dulu aman.
+- Subdomain `blog.msncode.dev`: **gratis** (domain sudah dibayar di Porkbun).
+- **Supabase Free tier**: 500MB database, 1GB storage, 50k monthly active users — cukup untuk blog awal.
+- **Vercel Hobby = non-komersial** per ToS. Begitu pasang iklan/afiliasi (komersial), pindahkan frontend ke **Cloudflare Pages** (free, boleh komersial) atau upgrade **Vercel Pro**.
 
 ---
 
-## Ringkas: urutan eksekusi
-1. Fase 1 (frontend) → situs live di `blog.msncode.dev`, cek About/Contact/Privacy.
-2. Ganti email kontak placeholder (`hello@msncode.dev`) di `Contact.jsx` & `PrivacyPolicy.jsx`.
-3. Fase 2 (backend + Atlas) → `api.msncode.dev`, data muncul, login jalan.
-4. Isi konten (~15–20 artikel) → daftar AdSense.
+## Checklist deploy production
+1. [ ] Supabase project dibuat, URL + keys dicatat
+2. [ ] Migrations di-push (`supabase db push` atau SQL Editor)
+3. [ ] Seed data dijalankan (hanya untuk testing, skip untuk production bersih)
+4. [ ] Edge Functions di-deploy (`api`, `redirect`, `seo`)
+5. [ ] Secrets di-set (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `FRONTEND_URL`, `EMERGENT_LLM_KEY`)
+6. [ ] Storage bucket `blog-images` ada dan public
+7. [ ] Google OAuth dikonfigurasi (opsional)
+8. [ ] Frontend `.env` / Vercel env vars di-set
+9. [ ] `vercel.json` di-update dengan project ref Supabase yang benar
+10. [ ] Domain `blog.msncode.dev` ditambahkan di Vercel + DNS Porkbun
+11. [ ] Test: signup, login, baca artikel, tulis artikel, komentar, affiliate redirect, sitemap.xml, rss.xml
+12. [ ] Ganti email kontak placeholder di `Contact.jsx` & `PrivacyPolicy.jsx`
+13. [ ] Buat owner account pertama via signup normal (atau via SQL untuk pastikan role owner)
+14. [ ] Isi konten (~15-20 artikel) → daftar AdSense

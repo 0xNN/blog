@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders, handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
+import { corsHeaders, handleCors, errorResponse } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -14,7 +14,7 @@ serve(async (req) => {
   const linkId = url.pathname.split("/").filter(Boolean).pop() || "";
   const articleId = url.searchParams.get("article_id");
 
-  if (!linkId) return errorResponse("Link ID required", 400);
+  if (!linkId) return errorResponse("Link ID required", 400, req);
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -24,7 +24,7 @@ serve(async (req) => {
     .eq("id", linkId)
     .single();
 
-  if (!link || !link.active) return errorResponse("Affiliate link not found", 404);
+  if (!link || !link.active) return errorResponse("Affiliate link not found", 404, req);
 
   // Track click
   await supabase.from("affiliate_clicks").insert({
@@ -44,7 +44,7 @@ serve(async (req) => {
     headers: {
       Location: link.url,
       "Cache-Control": "no-store",
-      ...corsHeaders,
+      ...corsHeaders(req),
     },
   });
 });

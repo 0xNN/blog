@@ -75,7 +75,9 @@ export default function Register() {
                     <input
                         type="password"
                         required
-                        minLength={6}
+                        minLength={8}
+                        pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{8,}"
+                        title="At least 8 characters with uppercase, lowercase, and a number"
                         value={form.password}
                         onChange={update("password")}
                         data-testid="register-password"

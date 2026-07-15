@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders, handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
+import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { CATEGORIES, type Role, type Status, type CommentStatus, type Lang } from "../_shared/constants.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -13,6 +13,49 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 function getSupabaseAdmin() {
   return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 }
+
+// --------------- Rate limiting ---------------
+const rateMap = new Map<string, { count: number; reset: number }>();
+
+function rateLimit(key: string, max: number, windowMs: number): boolean {
+  const now = Date.now();
+  const entry = rateMap.get(key);
+  if (!entry || now > entry.reset) {
+    rateMap.set(key, { count: 1, reset: now + windowMs });
+    return true;
+  }
+  if (entry.count >= max) return false;
+  entry.count++;
+  return true;
+}
+
+function getClientIp(req: Request): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+}
+
+// --------------- Validation helpers ---------------
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254;
+}
+
+function isValidUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return ["http:", "https:"].includes(u.protocol);
+  } catch {
+    return false;
+  }
+}
+
+function validatePassword(password: string): string | null {
+  if (!password || password.length < 8) return "Password must be at least 8 characters";
+  if (!/[A-Z]/.test(password)) return "Password must contain an uppercase letter";
+  if (!/[a-z]/.test(password)) return "Password must contain a lowercase letter";
+  if (!/[0-9]/.test(password)) return "Password must contain a number";
+  return null;
+}
+
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 // --------------- Auth helpers ---------------
 function decodeJwt(token: string): any {
@@ -78,7 +121,7 @@ function slugify(text: string): string {
 
 // GET /users/me — current user from Supabase auth
 async function handleMe(req: Request, _m: any, user: any) {
-  return jsonResponse(user);
+  return jsonResponse(user, 200, req);
 }
 
 // GET /users/me/profile — user profile from user_profiles table
@@ -114,8 +157,8 @@ async function handleMyProfile(req: Request, _m: any, user: any) {
     data = ins.data;
   }
 
-  if (!data) return errorResponse("Profile not found", 404);
-  return jsonResponse(data);
+  if (!data) return errorResponse("Profile not found", 404, req);
+  return jsonResponse(data, 200, req);
 }
 
 // --------------- ADMIN COMMENTS ---------------
@@ -130,7 +173,7 @@ async function handleAdminListComments(req: Request, _m: any, user: any) {
   let query = supabase.from("comments").select("*").order("created_at", { ascending: false }).limit(limit);
   if (status) query = query.eq("status", status);
   const { data } = await query;
-  return jsonResponse(data || []);
+  return jsonResponse(data || [], 200, req);
 }
 
 // PATCH /admin/comments/:id
@@ -140,7 +183,7 @@ async function handleModerateComment(req: Request, match: RegExpExecArray, user:
   const commentId = match[1];
   const body = await req.json();
   if (!["approved", "spam", "pending"].includes(body.status)) {
-    return errorResponse("Invalid status", 400);
+    return errorResponse("Invalid status", 400, req);
   }
   const { data, error } = await supabase
     .from("comments")
@@ -148,8 +191,8 @@ async function handleModerateComment(req: Request, match: RegExpExecArray, user:
     .eq("id", commentId)
     .select()
     .single();
-  if (error || !data) return errorResponse("Comment not found", 404);
-  return jsonResponse({ success: true });
+  if (error || !data) return errorResponse("Comment not found", 404, req);
+  return jsonResponse({ success: true }, 200, req);
 }
 
 // --------------- INVITES ---------------
@@ -166,9 +209,9 @@ async function handleInvites(req: Request, match: RegExpExecArray | null, user: 
       .select("*")
       .eq("token", token)
       .single();
-    if (!invite) return errorResponse("Invite not found", 404);
-    if (invite.status !== "pending") return errorResponse("Invite already used or revoked", 400);
-    if (new Date(invite.expires_at) < new Date()) return errorResponse("Invite expired", 400);
+    if (!invite) return errorResponse("Invite not found", 404, req);
+    if (invite.status !== "pending") return errorResponse("Invite already used or revoked", 400, req);
+    if (new Date(invite.expires_at) < new Date()) return errorResponse("Invite expired", 400, req);
     return jsonResponse({
       email: invite.email,
       name: invite.name,
@@ -186,16 +229,19 @@ async function handleInvites(req: Request, match: RegExpExecArray | null, user: 
       .from("invites")
       .select("*")
       .order("created_at", { ascending: false });
-    return jsonResponse(data || []);
+    return jsonResponse(data || [], 200, req);
   }
 
   // POST /invites — create new
   if (req.method === "POST") {
     const body = await req.json();
     if (!["author", "editor"].includes(body.role)) {
-      return errorResponse("Invalid role", 400);
+      return errorResponse("Invalid role", 400, req);
     }
-    const email = body.email?.toLowerCase();
+    const email = body.email?.toLowerCase().trim();
+    if (!email || !isValidEmail(email)) {
+      return errorResponse("Valid email required", 400, req);
+    }
 
     // Check existing user
     const { data: existingUser } = await supabase
@@ -203,7 +249,7 @@ async function handleInvites(req: Request, match: RegExpExecArray | null, user: 
       .select("id")
       .eq("email", email)
       .maybeSingle();
-    if (existingUser) return errorResponse("A user with this email already exists", 400);
+    if (existingUser) return errorResponse("A user with this email already exists", 400, req);
 
     const inviteToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -223,7 +269,7 @@ async function handleInvites(req: Request, match: RegExpExecArray | null, user: 
       .select()
       .single();
 
-    if (error) return errorResponse(error.message, 500);
+    if (error) return errorResponse("Internal server error", 500, req);
     const acceptUrl = `${FRONTEND_URL}/id/invite/${inviteToken}`;
     return jsonResponse({
       success: true,
@@ -235,11 +281,11 @@ async function handleInvites(req: Request, match: RegExpExecArray | null, user: 
   // DELETE /invites/:id
   if (req.method === "DELETE" && token) {
     const { error } = await supabase.from("invites").delete().eq("id", token);
-    if (error) return errorResponse("Invite not found", 404);
-    return jsonResponse({ success: true });
+    if (error) return errorResponse("Invite not found", 404, req);
+    return jsonResponse({ success: true }, 200, req);
   }
 
-  return errorResponse("Method not allowed", 405);
+  return errorResponse("Method not allowed", 405, req);
 }
 
 // POST /invites/token/:token/accept — accept invite & create auth user
@@ -248,9 +294,14 @@ async function handleAcceptInvite(req: Request, match: RegExpExecArray) {
   const inviteToken = match[1];
   const body = await req.json();
 
-  if (!body.password || body.password.length < 6) {
-    return errorResponse("Password must be at least 6 characters", 400);
+  // Rate limit: 5 attempts per 15 min per IP
+  const ip = getClientIp(req);
+  if (!rateLimit(`invite-accept:${ip}`, 5, 15 * 60 * 1000)) {
+    return errorResponse("Too many attempts. Please try again later.", 429, req);
   }
+
+  const pwError = validatePassword(body.password || "");
+  if (pwError) return errorResponse(pwError, 400, req);
 
   const { data: invite } = await supabase
     .from("invites")
@@ -258,9 +309,9 @@ async function handleAcceptInvite(req: Request, match: RegExpExecArray) {
     .eq("token", inviteToken)
     .single();
 
-  if (!invite) return errorResponse("Invite not found", 404);
-  if (invite.status !== "pending") return errorResponse("Invite already used", 400);
-  if (new Date(invite.expires_at) < new Date()) return errorResponse("Invite expired", 400);
+  if (!invite) return errorResponse("Invite not found", 404, req);
+  if (invite.status !== "pending") return errorResponse("Invite already used", 400, req);
+  if (new Date(invite.expires_at) < new Date()) return errorResponse("Invite expired", 400, req);
 
   // Create auth user
   const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
@@ -274,7 +325,7 @@ async function handleAcceptInvite(req: Request, match: RegExpExecArray) {
     },
   });
 
-  if (authError) return errorResponse(authError.message, 500);
+  if (authError) return errorResponse("Failed to create user account", 500, req);
 
   // Apply the invited role. The signup trigger creates every profile as 'author';
   // elevate here via service_role (clients cannot set role themselves).
@@ -296,7 +347,7 @@ async function handleAcceptInvite(req: Request, match: RegExpExecArray) {
     .eq("id", authUser.user.id)
     .single();
 
-  return jsonResponse(profile || { success: true });
+  return jsonResponse(profile || { success: true }, 200, req);
 }
 
 // GET /subscribers (admin)
@@ -307,7 +358,7 @@ async function handleSubscribersList(req: Request, _m: any, user: any) {
     .from("subscribers")
     .select("*")
     .order("created_at", { ascending: false });
-  return jsonResponse(data || []);
+  return jsonResponse(data || [], 200, req);
 }
 
 // --------------- HANDLERS ---------------
@@ -324,7 +375,7 @@ async function handleCategories(req: Request, match: RegExpExecArray) {
       .eq("category_slug", c.slug);
     results.push({ ...c, count: count || 0 });
   }
-  return jsonResponse(results);
+  return jsonResponse(results, 200, req);
 }
 
 // GET /articles
@@ -371,8 +422,8 @@ async function handleListArticles(req: Request) {
   }
 
   const { data, error } = await query;
-  if (error) return errorResponse(error.message, 500);
-  return jsonResponse(data || []);
+  if (error) return errorResponse("Internal server error", 500, req);
+  return jsonResponse(data || [], 200, req);
 }
 
 // GET /articles/featured
@@ -387,8 +438,8 @@ async function handleFeaturedArticles(req: Request) {
     .eq("featured", true)
     .order("published_at", { ascending: false })
     .limit(limit);
-  if (error) return errorResponse(error.message, 500);
-  return jsonResponse(data || []);
+  if (error) return errorResponse("Internal server error", 500, req);
+  return jsonResponse(data || [], 200, req);
 }
 
 // GET /articles/popular
@@ -402,8 +453,8 @@ async function handlePopularArticles(req: Request) {
     .eq("status", "published")
     .order("views", { ascending: false })
     .limit(limit);
-  if (error) return errorResponse(error.message, 500);
-  return jsonResponse(data || []);
+  if (error) return errorResponse("Internal server error", 500, req);
+  return jsonResponse(data || [], 200, req);
 }
 
 // GET /articles/:slug
@@ -433,7 +484,7 @@ async function handleGetArticle(req: Request, match: RegExpExecArray) {
     error = result.error;
   }
 
-  if (error || !article) return errorResponse("Article not found", 404);
+  if (error || !article) return errorResponse("Article not found", 404, req);
 
   // Increment view with IP dedup (30 min window)
   const clientIp = req.headers.get("x-forwarded-for") || "unknown";
@@ -457,7 +508,7 @@ async function handleGetArticle(req: Request, match: RegExpExecArray) {
     article.views = (article.views || 0) + 1;
   }
 
-  return jsonResponse(article);
+  return jsonResponse(article, 200, req);
 }
 
 // GET /articles/:id/related
@@ -473,7 +524,7 @@ async function handleRelatedArticles(req: Request, match: RegExpExecArray) {
     .eq("id", articleId)
     .single();
 
-  if (!article) return errorResponse("Article not found", 404);
+  if (!article) return errorResponse("Article not found", 404, req);
 
   const tags = article.tags || [];
   const category = article.category_slug;
@@ -520,7 +571,7 @@ async function handleRelatedArticles(req: Request, match: RegExpExecArray) {
     if (fallback) result.push(...fallback);
   }
 
-  return jsonResponse(result.slice(0, limit));
+  return jsonResponse(result.slice(0, limit), 200, req);
 }
 
 // GET /articles/:id/siblings
@@ -532,7 +583,7 @@ async function handleArticleSiblings(req: Request, match: RegExpExecArray) {
     .select("content_id, content_en")
     .eq("id", articleId)
     .single();
-  if (!article) return errorResponse("Article not found", 404);
+  if (!article) return errorResponse("Article not found", 404, req);
   return jsonResponse({
     id_slug: (article.content_id as any)?.slug || null,
     en_slug: (article.content_en as any)?.slug || null,
@@ -546,7 +597,7 @@ async function handleListAuthors() {
     .from("user_profiles")
     .select("id, name, slug, bio, avatar_url, twitter, github, website, created_at")
     .in("role", ["owner", "editor", "author"]); // exclude readers from the authors list
-  return jsonResponse(data || []);
+  return jsonResponse(data || [], 200, req);
 }
 
 // GET /authors/:slug
@@ -558,14 +609,14 @@ async function handleGetAuthor(req: Request, match: RegExpExecArray) {
     .select("id, name, slug, bio, avatar_url, twitter, github, website, created_at")
     .eq("slug", slug)
     .single();
-  if (!author) return errorResponse("Author not found", 404);
+  if (!author) return errorResponse("Author not found", 404, req);
   const { data: articles } = await supabase
     .from("articles")
     .select("*")
     .eq("author_slug", slug)
     .eq("status", "published")
     .order("published_at", { ascending: false });
-  return jsonResponse({ author, articles: articles || [] });
+  return jsonResponse({ author, articles: articles || [] }, 200, req);
 }
 
 // POST /articles
@@ -579,7 +630,17 @@ async function handleCreateArticle(req: Request, _m: any, user: any) {
     .eq("id", user.id)
     .single();
 
-  if (!profile) return errorResponse("User profile not found", 404);
+  if (!profile) return errorResponse("User profile not found", 404, req);
+
+  // Validate category_slug
+  const validSlugs = CATEGORIES.map((c) => c.slug);
+  if (!body.category_slug || !validSlugs.includes(body.category_slug)) {
+    return errorResponse("Invalid category_slug", 400, req);
+  }
+  // Validate cover_image URL if provided
+  if (body.cover_image && !isValidUrl(body.cover_image)) {
+    return errorResponse("Invalid cover_image URL", 400, req);
+  }
 
   const article = {
     author_id: user.id,
@@ -608,8 +669,8 @@ async function handleCreateArticle(req: Request, _m: any, user: any) {
   }
 
   const { data, error } = await supabase.from("articles").insert(article).select().single();
-  if (error) return errorResponse(error.message, 500);
-  return jsonResponse(data, 201);
+  if (error) return errorResponse("Internal server error", 500, req);
+  return jsonResponse(data, 201, req);
 }
 
 // PUT /articles/:id
@@ -623,7 +684,7 @@ async function handleUpdateArticle(req: Request, match: RegExpExecArray, user: a
     .select("*")
     .eq("id", articleId)
     .single();
-  if (!existing) return errorResponse("Article not found", 404);
+  if (!existing) return errorResponse("Article not found", 404, req);
 
   const { data: profile } = await supabase
     .from("user_profiles")
@@ -632,7 +693,7 @@ async function handleUpdateArticle(req: Request, match: RegExpExecArray, user: a
     .single();
 
   if (!["owner", "editor"].includes(profile?.role || "") && existing.author_id !== user.id) {
-    return errorResponse("Not allowed", 403);
+    return errorResponse("Not allowed", 403, req);
   }
 
   const updates: any = { ...body, updated_at: new Date().toISOString() };
@@ -646,8 +707,8 @@ async function handleUpdateArticle(req: Request, match: RegExpExecArray, user: a
     .eq("id", articleId)
     .select()
     .single();
-  if (error) return errorResponse(error.message, 500);
-  return jsonResponse(data);
+  if (error) return errorResponse("Internal server error", 500, req);
+  return jsonResponse(data, 200, req);
 }
 
 // DELETE /articles/:id
@@ -659,7 +720,7 @@ async function handleDeleteArticle(req: Request, match: RegExpExecArray, user: a
     .select("author_id")
     .eq("id", articleId)
     .single();
-  if (!existing) return errorResponse("Article not found", 404);
+  if (!existing) return errorResponse("Article not found", 404, req);
 
   const { data: profile } = await supabase
     .from("user_profiles")
@@ -667,12 +728,12 @@ async function handleDeleteArticle(req: Request, match: RegExpExecArray, user: a
     .eq("id", user.id)
     .single();
   if (!["owner", "editor"].includes(profile?.role || "") && existing.author_id !== user.id) {
-    return errorResponse("Not allowed", 403);
+    return errorResponse("Not allowed", 403, req);
   }
 
   const { error } = await supabase.from("articles").delete().eq("id", articleId);
-  if (error) return errorResponse(error.message, 500);
-  return jsonResponse({ success: true });
+  if (error) return errorResponse("Internal server error", 500, req);
+  return jsonResponse({ success: true }, 200, req);
 }
 
 // GET /comments/:articleId
@@ -685,13 +746,28 @@ async function handleListComments(req: Request, match: RegExpExecArray) {
     .eq("article_id", articleId)
     .neq("status", "spam")
     .order("created_at");
-  return jsonResponse(data || []);
+  return jsonResponse(data || [], 200, req);
 }
 
 // POST /comments
 async function handleCreateComment(req: Request, _m: any, user: any) {
   const supabase = getSupabaseAdmin();
   const body = await req.json();
+
+  // Rate limit: 10 comments per 5 min per user
+  if (!rateLimit(`comment:${user.id}`, 10, 5 * 60 * 1000)) {
+    return errorResponse("Too many comments. Please slow down.", 429, req);
+  }
+
+  // Validate input
+  if (!body.article_id) return errorResponse("article_id is required", 400, req);
+  if (!body.body || typeof body.body !== "string" || body.body.trim().length === 0) {
+    return errorResponse("Comment body is required", 400, req);
+  }
+  if (body.body.length > 2000) {
+    return errorResponse("Comment must be 2000 characters or less", 400, req);
+  }
+
   const comment = {
     article_id: body.article_id,
     user_id: user.id,
@@ -703,8 +779,8 @@ async function handleCreateComment(req: Request, _m: any, user: any) {
     status: "approved",
   };
   const { data, error } = await supabase.from("comments").insert(comment).select().single();
-  if (error) return errorResponse(error.message, 500);
-  return jsonResponse(data, 201);
+  if (error) return errorResponse("Internal server error", 500, req);
+  return jsonResponse(data, 201, req);
 }
 
 // DELETE /comments/:id
@@ -716,7 +792,7 @@ async function handleDeleteComment(req: Request, match: RegExpExecArray, user: a
     .select("user_id")
     .eq("id", commentId)
     .single();
-  if (!existing) return errorResponse("Comment not found", 404);
+  if (!existing) return errorResponse("Comment not found", 404, req);
 
   const { data: profile } = await supabase
     .from("user_profiles")
@@ -724,19 +800,19 @@ async function handleDeleteComment(req: Request, match: RegExpExecArray, user: a
     .eq("id", user.id)
     .single();
   if (!["owner", "editor"].includes(profile?.role || "") && existing.user_id !== user.id) {
-    return errorResponse("Not allowed", 403);
+    return errorResponse("Not allowed", 403, req);
   }
 
   await supabase.from("comments").delete().eq("id", commentId);
-  return jsonResponse({ success: true });
+  return jsonResponse({ success: true }, 200, req);
 }
 
 // POST /subscribe
 async function handleSubscribe(req: Request) {
   const supabase = getSupabaseAdmin();
   const body = await req.json();
-  const email = body.email?.toLowerCase();
-  if (!email) return errorResponse("Email required");
+  const email = body.email?.toLowerCase().trim();
+  if (!email || !isValidEmail(email)) return errorResponse("Valid email required", 400, req);
 
   const { data: existing } = await supabase
     .from("subscribers")
@@ -744,10 +820,10 @@ async function handleSubscribe(req: Request) {
     .eq("email", email)
     .maybeSingle();
 
-  if (existing) return jsonResponse({ success: true, message: "Already subscribed" });
+  if (existing) return jsonResponse({ success: true, message: "Already subscribed" }, 200, req);
 
   await supabase.from("subscribers").insert({ email, active: true });
-  return jsonResponse({ success: true, message: "Subscribed" }, 201);
+  return jsonResponse({ success: true, message: "Subscribed" }, 201, req);
 }
 
 // GET /analytics/summary
@@ -789,11 +865,21 @@ async function handleAnalytics(_req: Request, _m: any, user: any) {
 
 // POST /ai/generate
 async function handleAiGenerate(req: Request, _m: any, user: any) {
+  // Rate limit: 20 requests per hour per user
+  if (!rateLimit(`ai:${user.id}`, 20, 60 * 60 * 1000)) {
+    return errorResponse("AI request limit reached. Please try again later.", 429, req);
+  }
+
   if (!EMERGENT_LLM_KEY) {
-    return errorResponse("EMERGENT_LLM_KEY not set", 500);
+    return errorResponse("AI service not configured", 500, req);
   }
   const body = await req.json();
   const { mode, prompt, source_text, target_lang } = body;
+
+  // Validate mode
+  if (!["draft", "translate", "improve", "meta"].includes(mode)) {
+    return errorResponse("Invalid AI mode", 400, req);
+  }
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -812,9 +898,9 @@ async function handleAiGenerate(req: Request, _m: any, user: any) {
     });
 
     const data = await response.json();
-    return jsonResponse({ result: data.content?.[0]?.text || "" });
+    return jsonResponse({ result: data.content?.[0]?.text || "" }, 200, req);
   } catch (e: any) {
-    return errorResponse(`AI error: ${e.message}`, 500);
+    return errorResponse("AI service error", 500, req);
   }
 }
 
@@ -823,14 +909,18 @@ async function handleUpload(req: Request, _m: any, user: any) {
   const supabase = getSupabaseAdmin();
   const formData = await req.formData();
   const file = formData.get("file") as File;
-  if (!file) return errorResponse("No file provided");
+  if (!file) return errorResponse("No file provided", 400, req);
 
+  // Validate MIME type (not just extension) to prevent disguised uploads
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    return errorResponse("Only image files are allowed (JPEG, PNG, GIF, WebP)", 400, req);
+  }
   const ext = file.name?.split(".").pop()?.toLowerCase() || "bin";
   if (!["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
-    return errorResponse("Only image files are allowed");
+    return errorResponse("Only image files are allowed", 400, req);
   }
   if (file.size > 5 * 1024 * 1024) {
-    return errorResponse("File too large (max 5MB)");
+    return errorResponse("File too large (max 5MB)", 413, req);
   }
 
   const path = `uploads/${user.id}/${crypto.randomUUID()}.${ext}`;
@@ -838,7 +928,7 @@ async function handleUpload(req: Request, _m: any, user: any) {
     .from("blog-images")
     .upload(path, file, { contentType: file.type });
 
-  if (error) return errorResponse(`Upload error: ${error.message}`, 500);
+  if (error) return errorResponse("Upload failed", 500, req);
 
   const { data: { publicUrl } } = supabase.storage
     .from("blog-images")
@@ -878,7 +968,7 @@ async function handleAffiliateLinks(req: Request, match: RegExpExecArray | null,
         .from("affiliate_links")
         .select("*")
         .order("created_at", { ascending: false });
-      return jsonResponse(data || []);
+      return jsonResponse(data || [], 200, req);
     }
     // Public: only active links, optionally filtered by category (for AffiliateBox).
     const category = url.searchParams.get("category");
@@ -886,42 +976,50 @@ async function handleAffiliateLinks(req: Request, match: RegExpExecArray | null,
     if (category) query = query.eq("category_slug", category);
     query = query.eq("active", true).order("created_at", { ascending: false });
     const { data } = await query;
-    return jsonResponse(data || []);
+    return jsonResponse(data || [], 200, req);
   }
 
   if (req.method === "POST") {
     await requireRole(user, "owner"); // affiliate = owner only
     const body = await req.json();
+    // Validate URL
+    if (!body.url || !isValidUrl(body.url)) {
+      return errorResponse("A valid HTTP(S) URL is required", 400, req);
+    }
     const { data, error } = await supabase
       .from("affiliate_links")
       .insert({ ...body, clicks: 0, active: true })
       .select()
       .single();
-    if (error) return errorResponse(error.message, 500);
-    return jsonResponse(data, 201);
+    if (error) return errorResponse("Internal server error", 500, req);
+    return jsonResponse(data, 201, req);
   }
 
   if (req.method === "PUT" && linkId) {
     await requireRole(user, "owner"); // affiliate = owner only
     const body = await req.json();
+    // Validate URL if provided
+    if (body.url && !isValidUrl(body.url)) {
+      return errorResponse("A valid HTTP(S) URL is required", 400, req);
+    }
     const { data, error } = await supabase
       .from("affiliate_links")
       .update({ ...body, updated_at: new Date().toISOString() })
       .eq("id", linkId)
       .select()
       .single();
-    if (error) return errorResponse(error.message, 500);
-    return jsonResponse(data);
+    if (error) return errorResponse("Internal server error", 500, req);
+    return jsonResponse(data, 200, req);
   }
 
   if (req.method === "DELETE" && linkId) {
     await requireRole(user, "owner"); // affiliate = owner only
     const { error } = await supabase.from("affiliate_links").delete().eq("id", linkId);
-    if (error) return errorResponse(error.message, 500);
-    return jsonResponse({ success: true });
+    if (error) return errorResponse("Internal server error", 500, req);
+    return jsonResponse({ success: true }, 200, req);
   }
 
-  return errorResponse("Method not allowed", 405);
+  return errorResponse("Method not allowed", 405, req);
 }
 
 // --------------- ROUTER ---------------
@@ -981,7 +1079,6 @@ serve(async (req) => {
     try {
       let user: any = null;
       if (route.requireAuth) {
-        const requireAuth = route.requireAuth;
         user = await getUser(req, true);
         if (route.requireRoles?.length) {
           await requireRole(user, ...route.requireRoles);
@@ -989,11 +1086,14 @@ serve(async (req) => {
       }
       return await route.handler(req, match, user);
     } catch (e: any) {
-      const status = e.message === "Not authenticated" ? 401
-        : e.message === "Insufficient permissions" ? 403 : 500;
-      return errorResponse(e.message, status);
+      const isAuth = e.message === "Not authenticated";
+      const isForbidden = e.message === "Insufficient permissions";
+      const status = isAuth ? 401 : isForbidden ? 403 : 500;
+      const message = isAuth || isForbidden ? e.message : "Internal server error";
+      if (status === 500) console.error(`[${req.method} ${path}] Error:`, e.message);
+      return errorResponse(message, status, req);
     }
   }
 
-  return errorResponse("Not found", 404);
+  return errorResponse("Not found", 404, req);
 });

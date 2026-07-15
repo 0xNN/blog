@@ -7,15 +7,21 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const BASE_URL = Deno.env.get("FRONTEND_URL") || "";
 
-function xmlResponse(body: string): Response {
+const securityHeaders: Record<string, string> = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+};
+
+function xmlResponse(body: string, req: Request): Response {
   return new Response(body, {
-    headers: { ...corsHeaders, "Content-Type": "application/xml" },
+    headers: { ...corsHeaders(req), ...securityHeaders, "Content-Type": "application/xml" },
   });
 }
 
-function textResponse(body: string): Response {
+function textResponse(body: string, req: Request): Response {
   return new Response(body, {
-    headers: { ...corsHeaders, "Content-Type": "text/plain" },
+    headers: { ...corsHeaders(req), ...securityHeaders, "Content-Type": "text/plain" },
   });
 }
 
@@ -27,17 +33,17 @@ serve(async (req) => {
   const path = url.pathname;
 
   // Route internally by path
-  if (path.endsWith("/sitemap.xml")) return handleSitemap();
+  if (path.endsWith("/sitemap.xml")) return handleSitemap(req);
   if (path.endsWith("/rss.xml")) {
     const lang = url.searchParams.get("lang") || "id";
-    return handleRss(lang);
+    return handleRss(lang, req);
   }
-  if (path.endsWith("/ads.txt")) return handleAdsTxt();
+  if (path.endsWith("/ads.txt")) return handleAdsTxt(req);
 
-  return errorResponse("Not found", 404);
+  return errorResponse("Not found", 404, req);
 });
 
-async function handleSitemap() {
+async function handleSitemap(req: Request) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const { data: articles } = await supabase
     .from("articles")
@@ -80,10 +86,10 @@ async function handleSitemap() {
     "</urlset>",
   ].join("\n");
 
-  return xmlResponse(body);
+  return xmlResponse(body, req);
 }
 
-async function handleRss(lang: string) {
+async function handleRss(lang: string, req: Request) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const { data: articles } = await supabase
     .from("articles")
@@ -127,9 +133,9 @@ async function handleRss(lang: string) {
     "</channel></rss>",
   ].join("\n");
 
-  return xmlResponse(xml);
+  return xmlResponse(xml, req);
 }
 
-function handleAdsTxt() {
-  return textResponse("google.com, pub-1997030082284033, DIRECT, f08c47fec0942fa0\n");
+function handleAdsTxt(req: Request) {
+  return textResponse("google.com, pub-1997030082284033, DIRECT, f08c47fec0942fa0\n", req);
 }

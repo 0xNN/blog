@@ -10,7 +10,7 @@ Legenda effort: **S** = <1 hari · **M** = 1–3 hari · **L** = 4–10 hari · 
 
 ## TIER 0 — Fondasi Traffic (SEO/SSR) 🔴 PALING PENTING
 
-**Kenapa dulu:** semua tier lain mengalikan traffic. Traffic kecil → monetisasi sia-sia. Saat ini app = CRA SPA client-side; meta tag di-inject setelah load (`frontend/src/components/Seo.jsx`) sehingga scraper sosial (FB/WA/LinkedIn) sering dapat OG kosong, dan Core Web Vitals lemah.
+**Kenapa dulu:** semua tier lain mengalikan traffic. Traffic kecil → monetisasi sia-sia. Saat ini app = Vite SPA client-side; meta tag di-inject setelah load (`frontend/src/components/Seo.jsx`) sehingga scraper sosial (FB/WA/LinkedIn) sering dapat OG kosong, dan Core Web Vitals lemah.
 
 Pendekatan bertahap (jangan langsung rombak semua):
 
@@ -24,7 +24,7 @@ Tanpa migrasi penuh dulu.
 - [ ] Setup Next.js, port routing `/[lang]/...` (sudah cocok dengan struktur `id`/`en` sekarang).
 - [ ] `generateMetadata()` server-side → hapus ketergantungan `Seo.jsx` imperative.
 - [ ] ISR (`revalidate`) untuk halaman artikel → cepat + murah.
-- [ ] Backend FastAPI tetap sebagai API (tidak perlu diubah).
+- [ ] Backend Supabase Edge Functions tetap sebagai API (tidak perlu diubah).
 - **Acceptance:** Lighthouse SEO ≥ 95, LCP < 2.5s, artikel ter-render di "View Source" (bukan cuma `<div id=root>`).
 - **Catatan:** bisa ditunda kalau Fase 0a sudah cukup untuk sekarang, tapi ini plafon pertumbuhan jangka panjang.
 
@@ -33,19 +33,20 @@ Tanpa migrasi penuh dulu.
 ## TIER 1 — Monetisasi Nyata 💰
 
 ### 1.1 — AdSense/Ad network sungguhan **(M)**
-Saat ini `frontend/src/components/AdSlot.jsx` hanya placeholder; `ads.txt` (`backend/server.py`) masih `pub-XXXXXXX`.
+Saat ini `frontend/src/components/AdSlot.jsx` hanya placeholder; `ads.txt` (Edge Function `seo/index.ts`) sudah berisi publisher ID `pub-1997030082284033`.
 - [ ] Daftar AdSense (atau Ezoic/Mediavine saat traffic cukup).
 - [ ] `AdSlot.jsx` render unit iklan asli + **lazy-load** (IntersectionObserver) agar tidak merusak CWV.
 - [ ] Isi `ads.txt` dengan publisher ID asli.
 - [ ] Hormati flag `article.ads_enabled` yang **sudah ada** di model.
 - **Acceptance:** iklan tampil, `ads.txt` valid di AdSense console.
 
-### 1.2 — Sistem Affiliate Link **(M–L)** ⭐ ROI tertinggi
+### 1.2 — Sistem Affiliate Link **(M–L)** ⭐ ROI tertinggi ✅ SUDAH DIIMPLEMENTASIKAN
 Kategori Tools Review / Trading / Crypto / SaaS = ladang afiliasi. Sering > AdSense.
-- [ ] Backend: model `affiliate_links` (`id`, `name`, `url`, `merchant`, `category_slug`, `clicks`).
-- [ ] Endpoint: CRUD (owner/editor) + `GET /r/{link_id}` redirect + increment klik (`rel="sponsored" nofollow`).
-- [ ] Frontend: komponen `AffiliateBox` / tabel perbandingan tools, disclosure otomatis ("mengandung link afiliasi").
-- [ ] Tracking klik per artikel.
+- [x] Backend: tabel `affiliate_links` (`id`, `name`, `url`, `merchant`, `category_slug`, `description`, `image_url`, `clicks`, `active`).
+- [x] Endpoint: CRUD (owner only via `service_role`) + `GET /r/{link_id}` redirect + increment klik. Redirect handler di `redirect/index.ts`.
+- [x] Frontend: `AffiliateBox.jsx` menampilkan link per kategori di halaman artikel. `affiliateHref()` di `api.js` bangun URL same-origin `/r/`.
+- [x] Tracking klik per artikel (`affiliate_clicks` table dengan `link_id`, `article_id`, `ip`).
+- [ ] Disclosure otomatis ("mengandung link afiliasi") — belum ada, perlu ditambahkan.
 - **Acceptance:** klik link afiliasi ter-redirect + tercatat; disclosure tampil (wajib secara hukum & untuk trust).
 
 ### 1.3 — Analytics diarahkan ke Revenue **(M)**
@@ -59,7 +60,7 @@ Kategori Tools Review / Trading / Crypto / SaaS = ladang afiliasi. Sering > AdSe
 ## TIER 2 — Compounding (makin lama makin pasif) 📈
 
 ### 2.1 — Email Automation **(L)**
-Sekarang cuma simpan email + welcome (`backend/email_service.py`).
+Sekarang cuma simpan email di tabel `subscribers` (Edge Function handle subscribe).
 - [ ] Drip sequence otomatis untuk subscriber baru (3–5 email edukatif + soft-promo).
 - [ ] Newsletter mingguan otomatis (kompilasi artikel terbaru + slot afiliasi/sponsor).
 - [ ] Segmentasi bahasa (id/en) — sudah ada datanya.
@@ -73,7 +74,7 @@ Sekarang cuma simpan email + welcome (`backend/email_service.py`).
 - **Acceptance:** tiap artikel punya ≥3 internal link relevan otomatis.
 
 ### 2.3 — Pagination + Caching (biaya operasional) **(M)**
-Sekarang `ArticleList`/`Dashboard` fetch `?limit=100`, view counter nembak DB tiap request.
+Sekarang `ArticleList`/`Dashboard` fetch `?limit=50` (max 100), view counter nembak DB tiap request artikel detail (dengan IP dedup 30 menit via `article_views`).
 - [ ] Cursor/offset pagination di `/articles`.
 - [ ] CDN cache untuk halaman artikel publik (kalau sudah SSR/ISR di Tier 0b, otomatis).
 - **Acceptance:** halaman list tidak lag saat artikel > 100; biaya DB stabil saat traffic naik.

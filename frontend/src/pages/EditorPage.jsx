@@ -196,7 +196,7 @@ export default function EditorPage() {
         fd.append("file", file);
         try {
             const { data } = await api.post("/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
-            const backend = process.env.REACT_APP_BACKEND_URL || "";
+            const backend = import.meta.env.VITE_EDGE_FUNCTIONS_URL || "";
             setMeta((m) => ({ ...m, cover_image: `${backend}${data.url}` }));
         } catch (err) {
             setError("Upload failed: " + (err?.response?.data?.detail || err.message));

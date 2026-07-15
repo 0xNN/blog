@@ -1,5 +1,10 @@
 # Migrasi FastAPI + MongoDB → Supabase Edge Functions + Postgres
 
+> **Status: MIGRASI SELESAI ✅** (Juli 2026)
+> Semua fase di bawah sudah diimplementasikan. Dokumen ini disimpan sebagai catatan migrasi.
+> Hasil aktual: 3 Edge Functions (`api`, `redirect`, `seo`) dengan regex-based router di `api/index.ts`,
+> bukan ~20 function terpisah seperti direncanakan. Frontend tetap React tapi pindah dari CRA/CRACO ke Vite.
+
 **Tujuan:** Biaya $0 total tanpa kartu kredit.
 - Backend: Supabase Edge Functions (Deno/TypeScript)
 - Database: Supabase Postgres 500MB
