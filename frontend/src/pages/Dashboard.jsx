@@ -4,28 +4,52 @@ import api from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { PenSquare, Trash2, Eye, LogOut, Sparkles, Users, FileText } from "lucide-react";
+import Pagination from "@/components/Pagination";
 import AdminPanel from "@/components/AdminPanel";
 
+const PER_PAGE = 10;
+
+function SkeletonRow() {
+    return (
+        <li className="flex items-center gap-4 px-5 py-4 border-b border-border animate-pulse">
+            <div className="flex-1 space-y-2">
+                <div className="h-4 bg-muted rounded w-3/4" />
+                <div className="h-3 bg-muted rounded w-1/3" />
+            </div>
+            <div className="h-8 w-8 bg-muted rounded-full" />
+            <div className="h-8 w-8 bg-muted rounded-full" />
+        </li>
+    );
+}
+
 export default function Dashboard() {
-    const { user, profile, logout, loading } = useAuth();
+    const { user, profile, logout, loading: authLoading } = useAuth();
     const { lang, t } = useLang();
     const nav = useNavigate();
     const [articles, setArticles] = useState([]);
     const [analytics, setAnalytics] = useState(null);
+    const [artLoading, setArtLoading] = useState(true);
+    const [page, setPage] = useState(1);
 
     useEffect(() => {
-        if (!loading && !user) nav(`/${lang}/login`);
-    }, [user, loading, lang, nav]);
+        if (!authLoading && !user) nav(`/${lang}/login`);
+    }, [user, authLoading, lang, nav]);
 
     useEffect(() => {
         if (!user) return;
-        api.get(`/articles?status=draft&limit=100`).then((r) => {
-            api.get(`/articles?status=published&limit=100`).then((r2) => {
-                const all = [...r.data, ...r2.data];
-                const mine = profile?.role === "author" ? all.filter((a) => a.author_id === user.id) : all;
-                setArticles(mine);
-            });
-        });
+        setArtLoading(true);
+        Promise.all([
+            api.get(`/articles?status=draft&limit=100`),
+            api.get(`/articles?status=published&limit=100`),
+        ])
+        .then(([drafts, published]) => {
+            const all = [...drafts.data, ...published.data];
+            const mine = profile?.role === "author" ? all.filter((a) => a.author_id === user.id) : all;
+            setArticles(mine);
+        })
+        .catch(() => {})
+        .finally(() => setArtLoading(false));
+
         if (profile?.role === "owner" || profile?.role === "editor") {
             api.get("/analytics/summary").then((r) => setAnalytics(r.data)).catch(() => {});
         }
@@ -40,6 +64,9 @@ export default function Dashboard() {
             console.error(e);
         }
     };
+
+    const totalPages = Math.ceil(articles.length / PER_PAGE);
+    const paginated = articles.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
     if (!user || user === false) return null;
 
@@ -65,12 +92,21 @@ export default function Dashboard() {
                 </div>
             </header>
 
-            {analytics && (
+            {analytics ? (
                 <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
                     <StatCard label={t("Total artikel", "Total articles")} value={analytics.total_articles} icon={<FileText className="h-4 w-4" />} />
                     <StatCard label={t("Terpublikasi", "Published")} value={analytics.published} icon={<Sparkles className="h-4 w-4" />} />
                     <StatCard label={t("Total views", "Total views")} value={analytics.total_views} icon={<Eye className="h-4 w-4" />} />
                     <StatCard label={t("Subscriber", "Subscribers")} value={analytics.total_subscribers} icon={<Users className="h-4 w-4" />} />
+                </section>
+            ) : (
+                <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                    {[1,2,3,4].map(i => (
+                        <div key={i} className="rounded-2xl border border-border p-5 bg-card animate-pulse">
+                            <div className="h-3 bg-muted rounded w-1/2 mb-3" />
+                            <div className="h-8 bg-muted rounded w-1/3" />
+                        </div>
+                    ))}
                 </section>
             )}
 
@@ -80,37 +116,51 @@ export default function Dashboard() {
                     <span className="text-xs text-muted-foreground font-mono">{articles.length}</span>
                 </div>
                 <ul>
-                    {articles.map((a) => {
-                        const c = a.content_id || a.content_en;
-                        return (
-                            <li key={a.id} data-testid={`dashboard-article-${a.id}`} className="flex items-center gap-4 px-5 py-4 border-b border-border last:border-0 hover:bg-muted/30">
-                                <div className="flex-1 min-w-0">
-                                    <div className="font-semibold truncate">{c?.title || "(untitled)"}</div>
-                                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
-                                        <span className={`inline-block h-1.5 w-1.5 rounded-full ${a.status === "published" ? "bg-green-500" : "bg-yellow-500"}`}></span>
-                                        {a.status} · {a.views} views · {a.category_slug}
+                    {artLoading ? (
+                        <>
+                            <SkeletonRow />
+                            <SkeletonRow />
+                            <SkeletonRow />
+                            <SkeletonRow />
+                            <SkeletonRow />
+                        </>
+                    ) : paginated.length > 0 ? (
+                        paginated.map((a) => {
+                            const c = a.content_id || a.content_en;
+                            return (
+                                <li key={a.id} data-testid={`dashboard-article-${a.id}`} className="flex items-center gap-4 px-5 py-4 border-b border-border last:border-0 hover:bg-muted/30">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-semibold truncate">{c?.title || "(untitled)"}</div>
+                                        <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${a.status === "published" ? "bg-green-500" : "bg-yellow-500"}`} />
+                                            {a.status} · {a.views} views · {a.category_slug}
+                                        </div>
                                     </div>
-                                </div>
-                                <Link to={`/${lang}/editor/${a.id}`} className="p-2 rounded-full hover:bg-muted" title="Edit" data-testid={`edit-article-${a.id}`}>
-                                    <PenSquare className="h-4 w-4" />
-                                </Link>
-                                {c?.slug && a.status === "published" && (
-                                    <Link to={`/${lang}/blog/${c.slug}`} className="p-2 rounded-full hover:bg-muted" title="View">
-                                        <Eye className="h-4 w-4" />
+                                    <Link to={`/${lang}/editor/${a.id}`} className="p-2 rounded-full hover:bg-muted" title="Edit" data-testid={`edit-article-${a.id}`}>
+                                        <PenSquare className="h-4 w-4" />
                                     </Link>
-                                )}
-                                <button onClick={() => del(a.id)} className="p-2 rounded-full hover:bg-destructive/10 hover:text-destructive" title="Delete" data-testid={`delete-article-${a.id}`}>
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
-                            </li>
-                        );
-                    })}
-                    {articles.length === 0 && (
+                                    {c?.slug && a.status === "published" && (
+                                        <Link to={`/${lang}/blog/${c.slug}`} className="p-2 rounded-full hover:bg-muted" title="View">
+                                            <Eye className="h-4 w-4" />
+                                        </Link>
+                                    )}
+                                    <button onClick={() => del(a.id)} className="p-2 rounded-full hover:bg-destructive/10 hover:text-destructive" title="Delete" data-testid={`delete-article-${a.id}`}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
+                                </li>
+                            );
+                        })
+                    ) : (
                         <li className="px-5 py-12 text-center text-sm text-muted-foreground font-body">
                             {t("Belum ada artikel. Yuk tulis yang pertama!", "No articles yet. Write your first one!")}
                         </li>
                     )}
                 </ul>
+                {!artLoading && articles.length > PER_PAGE && (
+                    <div className="px-5 border-t border-border">
+                        <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+                    </div>
+                )}
             </section>
 
             {(profile?.role === "owner" || profile?.role === "editor") && <AdminPanel />}
