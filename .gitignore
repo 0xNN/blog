@@ -54,3 +54,9 @@ memory/test_credentials.md
 # Legacy artifacts
 .commandcode/
 .mimocode
+
+# Articles
+articles/
+
+# Seed Articles
+backend_supabase/seed_articles_new.sql
