@@ -45,7 +45,7 @@ export default function Home() {
             <PageSeo
                 lang={lang}
                 path={`/${lang}`}
-                title={lang === "id" ? "Blog Developer Bilingual (ID + EN)" : "The Bilingual Developer Blog"}
+                title={lang === "id" ? "MSNCode — Tutorial, Cerita & Tools Developer" : "MSNCode — Dev Tutorials, Stories & Tools"}
                 description={lang === "id"
                     ? "Tutorial mendalam, solusi error real-world, dan cerita indie hacker untuk developer Indonesia dan global."
                     : "In-depth tutorials, real-world error fixes, and indie hacker stories for developers worldwide."}
@@ -58,7 +58,7 @@ export default function Home() {
                         <div className="animate-fade-in" style={{ animationDelay: "0ms" }}>
                             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-mono text-muted-foreground">
                                 <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--accent))] animate-pulse shrink-0" />
-                                {t("Blog developer · Bilingual ID + EN", "Developer blog · Bilingual ID + EN")}
+                                {t("Tutorial, cerita & tools developer", "Tutorials, stories & dev tools")}
                             </div>
                         </div>
                         <h1
