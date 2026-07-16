@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
-import { PenSquare, Trash2, Eye, LogOut, Sparkles, Users, FileText } from "lucide-react";
+import { PenSquare, Trash2, Eye, LogOut, Sparkles, Users, FileText, Search, X } from "lucide-react";
 import Pagination from "@/components/Pagination";
 import AdminPanel from "@/components/AdminPanel";
 
@@ -30,6 +30,7 @@ export default function Dashboard() {
     const [analytics, setAnalytics] = useState(null);
     const [artLoading, setArtLoading] = useState(true);
     const [page, setPage] = useState(1);
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         if (!authLoading && !user) nav(`/${lang}/login`);
@@ -65,8 +66,16 @@ export default function Dashboard() {
         }
     };
 
-    const totalPages = Math.ceil(articles.length / PER_PAGE);
-    const paginated = articles.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+    const filtered = articles.filter(a => {
+        if (!search) return true;
+        const q = search.toLowerCase();
+        const c = a.content_id || a.content_en;
+        return (c?.title || "").toLowerCase().includes(q)
+            || (a.category_slug || "").includes(q)
+            || (a.status || "").includes(q);
+    });
+    const totalPages = Math.ceil(filtered.length / PER_PAGE);
+    const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
     if (!user || user === false) return null;
 
@@ -111,9 +120,16 @@ export default function Dashboard() {
             )}
 
             <section className="rounded-2xl border border-border overflow-hidden">
-                <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-                    <h2 className="font-heading text-lg font-bold tracking-tight">{t("Artikel kamu", "Your articles")}</h2>
-                    <span className="text-xs text-muted-foreground font-mono">{articles.length}</span>
+                <div className="px-5 py-4 border-b border-border flex items-center justify-between gap-4">
+                    <h2 className="font-heading text-lg font-bold tracking-tight shrink-0">{t("Artikel kamu", "Your articles")}</h2>
+                    <div className="relative flex-1 max-w-xs">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+                            placeholder={t("Cari artikel...", "Search articles...")}
+                            className="w-full pl-8 pr-8 py-1.5 rounded-full border border-border bg-background text-sm outline-none focus:border-[hsl(var(--accent))] transition" />
+                        {search && <button onClick={() => { setSearch(""); setPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="h-3.5 w-3.5 text-muted-foreground" /></button>}
+                    </div>
+                    <span className="text-xs text-muted-foreground font-mono shrink-0">{filtered.length}</span>
                 </div>
                 <ul>
                     {artLoading ? (

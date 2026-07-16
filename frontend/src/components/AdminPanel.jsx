@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
-import { UserPlus, Trash2, MessageSquareWarning, CheckCheck, Link2, Plus, Power } from "lucide-react";
+import { UserPlus, Trash2, MessageSquareWarning, CheckCheck, Link2, Plus, Power, Search, X } from "lucide-react";
 import Pagination from "@/components/Pagination";
 
 const PER_PAGE = 10;
@@ -39,6 +39,7 @@ export default function AdminPanel() {
     const [affForm, setAffForm] = useState({ name: "", url: "", merchant: "", category_slug: "tools-review", description: "", image_url: "" });
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+    const [search, setSearch] = useState({ invites: "", comments: "", subs: "", links: "" });
 
     const canAccess = profile && (profile.role === "owner" || profile.role === "editor");
     const isOwner = profile?.role === "owner";
@@ -181,11 +182,20 @@ export default function AdminPanel() {
                     </form>
                     {message && <div className="px-4 py-2 text-xs text-[hsl(var(--accent))] bg-[hsl(var(--accent))]/10">{message}</div>}
                     {error && <div className="px-4 py-2 text-xs text-destructive bg-destructive/10">{error}</div>}
+                    <div className="px-4 py-2 border-b border-border">
+                        <div className="relative max-w-xs">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            <input value={search.invites} onChange={e => { setSearch(s => ({ ...s, invites: e.target.value })); setPage(p => ({ ...p, invites: 1 })); }}
+                                placeholder={t("Cari undangan...", "Search invites...")} className="w-full pl-8 pr-8 py-1.5 rounded-full border border-border bg-background text-sm outline-none focus:border-[hsl(var(--accent))]" />
+                            {search.invites && <button onClick={() => { setSearch(s => ({ ...s, invites: "" })); setPage(p => ({ ...p, invites: 1 })); }} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="h-3.5 w-3.5 text-muted-foreground" /></button>}
+                        </div>
+                    </div>
                     <ul>
                         {loading.invites ? (
                             <><SkeletonRow /><SkeletonRow /><SkeletonRow /></>
                         ) : (() => {
-                            const { items, total } = paginate(invites, page.invites);
+                            const filtered = invites.filter(i => !search.invites || i.name.toLowerCase().includes(search.invites.toLowerCase()) || i.email.toLowerCase().includes(search.invites.toLowerCase()));
+                            const { items, total } = paginate(filtered, page.invites);
                             return items.length > 0 ? items.map(inv => (
                                 <li key={inv.id} data-testid={`invite-row-${inv.id}`} className="flex items-center gap-4 px-4 py-3 border-b border-border last:border-0 text-sm">
                                     <div className="flex-1 min-w-0">
@@ -204,8 +214,8 @@ export default function AdminPanel() {
                             );
                         })()}
                     </ul>
-                    {!loading.invites && invites.length > PER_PAGE && (
-                        <div className="px-4 border-t border-border"><Pagination page={page.invites} totalPages={paginate(invites, page.invites).total} onPage={p => setPage(s => ({ ...s, invites: p }))} /></div>
+                    {!loading.invites && invites.filter(i => !search.invites || i.name.toLowerCase().includes(search.invites.toLowerCase()) || i.email.toLowerCase().includes(search.invites.toLowerCase())).length > PER_PAGE && (
+                        <div className="px-4 border-t border-border"><Pagination page={page.invites} totalPages={paginate(invites.filter(i => !search.invites || i.name.toLowerCase().includes(search.invites.toLowerCase()) || i.email.toLowerCase().includes(search.invites.toLowerCase())), page.invites).total} onPage={p => setPage(s => ({ ...s, invites: p }))} /></div>
                     )}
                 </div>
             )}
@@ -213,11 +223,20 @@ export default function AdminPanel() {
             {/* --- COMMENTS --- */}
             {tab === "comments" && (
                 <div className="rounded-2xl border border-border overflow-hidden">
+                    <div className="px-4 py-2 border-b border-border">
+                        <div className="relative max-w-xs">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            <input value={search.comments} onChange={e => { setSearch(s => ({ ...s, comments: e.target.value })); setPage(p => ({ ...p, comments: 1 })); }}
+                                placeholder={t("Cari komentar...", "Search comments...")} className="w-full pl-8 pr-8 py-1.5 rounded-full border border-border bg-background text-sm outline-none focus:border-[hsl(var(--accent))]" />
+                            {search.comments && <button onClick={() => { setSearch(s => ({ ...s, comments: "" })); setPage(p => ({ ...p, comments: 1 })); }} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="h-3.5 w-3.5 text-muted-foreground" /></button>}
+                        </div>
+                    </div>
                     <ul>
                         {loading.comments ? (
                             <><SkeletonRow /><SkeletonRow /><SkeletonRow /></>
                         ) : (() => {
-                            const { items, total } = paginate(comments, page.comments);
+                            const filtered = comments.filter(c => !search.comments || c.body?.toLowerCase().includes(search.comments.toLowerCase()) || c.user_name?.toLowerCase().includes(search.comments.toLowerCase()));
+                            const { items, total } = paginate(filtered, page.comments);
                             return items.length > 0 ? items.map(c => (
                                 <li key={c.id} data-testid={`mod-comment-${c.id}`} className="flex items-start gap-3 px-4 py-3 border-b border-border last:border-0">
                                     <div className="flex-1 min-w-0">
@@ -238,8 +257,8 @@ export default function AdminPanel() {
                             );
                         })()}
                     </ul>
-                    {!loading.comments && comments.length > PER_PAGE && (
-                        <div className="px-4 border-t border-border"><Pagination page={page.comments} totalPages={paginate(comments, page.comments).total} onPage={p => setPage(s => ({ ...s, comments: p }))} /></div>
+                    {!loading.comments && comments.filter(c => !search.comments || c.body?.toLowerCase().includes(search.comments.toLowerCase()) || c.user_name?.toLowerCase().includes(search.comments.toLowerCase())).length > PER_PAGE && (
+                        <div className="px-4 border-t border-border"><Pagination page={page.comments} totalPages={paginate(comments.filter(c => !search.comments || c.body?.toLowerCase().includes(search.comments.toLowerCase()) || c.user_name?.toLowerCase().includes(search.comments.toLowerCase())), page.comments).total} onPage={p => setPage(s => ({ ...s, comments: p }))} /></div>
                     )}
                 </div>
             )}
@@ -250,11 +269,20 @@ export default function AdminPanel() {
                     <div className="px-4 py-3 border-b border-border text-sm font-semibold">
                         {subs.length} {t("subscriber", "subscribers")}
                     </div>
+                    <div className="px-4 py-2 border-b border-border">
+                        <div className="relative max-w-xs">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            <input value={search.subs} onChange={e => { setSearch(s => ({ ...s, subs: e.target.value })); setPage(p => ({ ...p, subs: 1 })); }}
+                                placeholder={t("Cari subscriber...", "Search subscribers...")} className="w-full pl-8 pr-8 py-1.5 rounded-full border border-border bg-background text-sm outline-none focus:border-[hsl(var(--accent))]" />
+                            {search.subs && <button onClick={() => { setSearch(s => ({ ...s, subs: "" })); setPage(p => ({ ...p, subs: 1 })); }} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="h-3.5 w-3.5 text-muted-foreground" /></button>}
+                        </div>
+                    </div>
                     <ul>
                         {loading.subs ? (
                             <><SkeletonRow /><SkeletonRow /><SkeletonRow /></>
                         ) : (() => {
-                            const { items, total } = paginate(subs, page.subs);
+                            const filtered = subs.filter(s => !search.subs || s.email.toLowerCase().includes(search.subs.toLowerCase()));
+                            const { items, total } = paginate(filtered, page.subs);
                             return items.length > 0 ? items.map(s => (
                                 <li key={s.id} className="flex items-center px-4 py-2 border-b border-border last:border-0 text-sm">
                                     <span className="flex-1 truncate">{s.email}</span>
@@ -265,8 +293,8 @@ export default function AdminPanel() {
                             );
                         })()}
                     </ul>
-                    {!loading.subs && subs.length > PER_PAGE && (
-                        <div className="px-4 border-t border-border"><Pagination page={page.subs} totalPages={paginate(subs, page.subs).total} onPage={p => setPage(s => ({ ...s, subs: p }))} /></div>
+                    {!loading.subs && (() => { const f = subs.filter(s => !search.subs || s.email.toLowerCase().includes(search.subs.toLowerCase())); return f.length > PER_PAGE; })() && (
+                        <div className="px-4 border-t border-border"><Pagination page={page.subs} totalPages={paginate(subs.filter(s => !search.subs || s.email.toLowerCase().includes(search.subs.toLowerCase())), page.subs).total} onPage={p => setPage(s => ({ ...s, subs: p }))} /></div>
                     )}
                 </div>
             )}
@@ -296,11 +324,20 @@ export default function AdminPanel() {
                     </form>
                     {message && <div className="px-4 py-2 text-xs text-[hsl(var(--accent))] bg-[hsl(var(--accent))]/10">{message}</div>}
                     {error && <div className="px-4 py-2 text-xs text-destructive bg-destructive/10">{error}</div>}
+                    <div className="px-4 py-2 border-b border-border">
+                        <div className="relative max-w-xs">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            <input value={search.links} onChange={e => { setSearch(s => ({ ...s, links: e.target.value })); setPage(p => ({ ...p, links: 1 })); }}
+                                placeholder={t("Cari link...", "Search links...")} className="w-full pl-8 pr-8 py-1.5 rounded-full border border-border bg-background text-sm outline-none focus:border-[hsl(var(--accent))]" />
+                            {search.links && <button onClick={() => { setSearch(s => ({ ...s, links: "" })); setPage(p => ({ ...p, links: 1 })); }} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="h-3.5 w-3.5 text-muted-foreground" /></button>}
+                        </div>
+                    </div>
                     <ul>
                         {loading.links ? (
                             <><SkeletonRow /><SkeletonRow /><SkeletonRow /></>
                         ) : (() => {
-                            const { items, total } = paginate(links, page.links);
+                            const filtered = links.filter(l => !search.links || l.name.toLowerCase().includes(search.links.toLowerCase()) || l.merchant?.toLowerCase().includes(search.links.toLowerCase()));
+                            const { items, total } = paginate(filtered, page.links);
                             return items.length > 0 ? items.map(l => (
                                 <li key={l.id} data-testid={`aff-row-${l.id}`} className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 text-sm">
                                     <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -322,8 +359,8 @@ export default function AdminPanel() {
                             );
                         })()}
                     </ul>
-                    {!loading.links && links.length > PER_PAGE && (
-                        <div className="px-4 border-t border-border"><Pagination page={page.links} totalPages={paginate(links, page.links).total} onPage={p => setPage(s => ({ ...s, links: p }))} /></div>
+                    {!loading.links && links.filter(l => !search.links || l.name.toLowerCase().includes(search.links.toLowerCase()) || l.merchant?.toLowerCase().includes(search.links.toLowerCase())).length > PER_PAGE && (
+                        <div className="px-4 border-t border-border"><Pagination page={page.links} totalPages={paginate(links.filter(l => !search.links || l.name.toLowerCase().includes(search.links.toLowerCase()) || l.merchant?.toLowerCase().includes(search.links.toLowerCase())), page.links).total} onPage={p => setPage(s => ({ ...s, links: p }))} /></div>
                     )}
                 </div>
             )}
