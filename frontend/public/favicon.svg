@@ -1,4 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
   <rect width="48" height="48" rx="10" fill="#1a9e80"/>
-  <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="white" font-size="20" font-weight="800" font-family="monospace">&lt;/&gt;</text>
+  <g stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- <  -->
+    <path d="M16 30 L24 24 L16 18"/>
+    <!-- / -->
+    <path d="M26 16 L22 32"/>
+    <!-- > -->
+    <path d="M32 30 L24 24 L32 18"/>
+  </g>
 </svg>

@@ -1,6 +1,6 @@
 /**
  * MSNCode brand mark — `/>` code tag on teal rounded square.
- * Matches the favicon/OG image mark exactly.
+ * Matches favicon.svg and apple-touch-icon.svg exactly.
  */
 export default function BrandMark({ size = 24, className = "" }) {
     return (
@@ -14,16 +14,11 @@ export default function BrandMark({ size = 24, className = "" }) {
             aria-hidden="true"
         >
             <rect width="48" height="48" rx="10" fill="#1a9e80"/>
-            <text
-                x="50%"
-                y="55%"
-                dominantBaseline="middle"
-                textAnchor="middle"
-                fill="white"
-                fontSize="20"
-                fontWeight="800"
-                fontFamily="monospace"
-            >&lt;/&gt;</text>
+            <g stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none">
+                <path d="M16 30 L24 24 L16 18"/>
+                <path d="M26 16 L22 32"/>
+                <path d="M32 30 L24 24 L32 18"/>
+            </g>
         </svg>
     );
 }
