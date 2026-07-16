@@ -118,31 +118,31 @@ export default function ArticleDetail() {
                     <div className="flex items-center justify-between flex-wrap gap-4 mt-8 pb-6 border-b border-border">
                         <Link to={`/${lang}/author/${article.author_slug}`} className="flex items-center gap-3 group" data-testid="article-author-link">
                             {article.author_avatar ? (
-                                <img src={article.author_avatar} alt={article.author_name} className="h-11 w-11 rounded-full object-cover" />
+                                <img src={article.author_avatar} alt={article.author_name} className="h-11 w-11 rounded-full object-cover ring-2 ring-border group-hover:ring-[hsl(var(--accent))] transition" />
                             ) : (
-                                <div className="h-11 w-11 rounded-full bg-muted flex items-center justify-center font-bold">
+                                <div className="h-11 w-11 rounded-full bg-muted flex items-center justify-center font-bold ring-2 ring-border group-hover:ring-[hsl(var(--accent))] transition">
                                     {article.author_name?.[0]}
                                 </div>
                             )}
                             <div>
-                                <div className="font-semibold text-sm group-hover:text-[hsl(var(--accent))]">{article.author_name}</div>
+                                <div className="font-semibold text-sm group-hover:text-[hsl(var(--accent))] transition">{article.author_name}</div>
                                 <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
                                     <Clock className="h-3 w-3" />{article.reading_time || 3} {t("menit baca", "min read")}
-                                    <span>·</span>
+                                    <span className="text-border-strong">·</span>
                                     <Eye className="h-3 w-3" />{article.views} views
                                 </div>
                             </div>
                         </Link>
 
-                        <div className="flex items-center gap-2">
-                            <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(content.title)}&url=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer" className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))]" data-testid="share-twitter" aria-label="Share on Twitter">
+                        <div className="flex items-center gap-1.5">
+                            <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(content.title)}&url=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer" className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))] hover:text-[hsl(var(--accent))] transition" data-testid="share-twitter" aria-label="Share on Twitter">
                                 <Twitter className="h-3.5 w-3.5" />
                             </a>
-                            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer" className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))]" data-testid="share-linkedin" aria-label="Share on LinkedIn">
+                            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer" className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))] hover:text-[hsl(var(--accent))] transition" data-testid="share-linkedin" aria-label="Share on LinkedIn">
                                 <Linkedin className="h-3.5 w-3.5" />
                             </a>
-                            <button onClick={shareCopy} data-testid="share-copy" className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))]" aria-label="Copy link">
-                                {copied ? <Check className="h-3.5 w-3.5" /> : <LinkIcon className="h-3.5 w-3.5" />}
+                            <button onClick={shareCopy} data-testid="share-copy" className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))] hover:text-[hsl(var(--accent))] transition" aria-label="Copy link">
+                                {copied ? <Check className="h-3.5 w-3.5 text-[hsl(var(--accent))]" /> : <LinkIcon className="h-3.5 w-3.5" />}
                             </button>
                         </div>
                     </div>
@@ -155,7 +155,7 @@ export default function ArticleDetail() {
                 )}
 
                 <div className="grid lg:grid-cols-[minmax(0,1fr)_14rem] gap-8 max-w-5xl mx-auto">
-                    <div className="min-w-0" data-article-body data-testid="article-body">
+                    <div className="min-w-0 prose-article" data-article-body data-testid="article-body">
                         <MarkdownRenderer content={beforeAd} />
                         <AdSlot position="in-article" enabled={article.ads_enabled} />
                         <MarkdownRenderer content={afterAd} />
