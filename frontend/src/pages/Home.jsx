@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, TrendingUp, Code2, Bug, Wrench, DollarSign, Sparkles, Bot, GraduationCap, Zap, Rocket, Network } from "lucide-react";
 import api from "@/lib/api";
 import { useLang } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import ArticleCard from "@/components/ArticleCard";
 import NewsletterForm from "@/components/NewsletterForm";
 import { PageSeo } from "@/components/Seo";
@@ -28,6 +29,7 @@ const PILLARS = [
 
 export default function Home() {
     const { lang, t } = useLang();
+    const { user, profile } = useAuth();
     const [featured, setFeatured] = useState([]);
     const [latest, setLatest] = useState([]);
     const [popular, setPopular] = useState([]);
@@ -92,11 +94,11 @@ export default function Home() {
                                 <ArrowRight className="h-4 w-4" />
                             </Link>
                             <Link
-                                to={`/${lang}/register`}
+                                to={user ? `/${lang}/editor/new` : `/${lang}/register`}
                                 data-testid="hero-cta-write"
                                 className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-2.5 text-sm font-semibold hover:border-[hsl(var(--accent))] hover:text-[hsl(var(--accent))] active:scale-[0.98] transition-all duration-200"
                             >
-                                {t("Jadi kontributor", "Become a contributor")}
+                                {user ? t("Tulis artikel", "Write article") : t("Jadi kontributor", "Become a contributor")}
                             </Link>
                         </div>
                     </div>

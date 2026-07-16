@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth, formatApiError } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -6,9 +6,13 @@ import { LogIn } from "lucide-react";
 import GoogleLoginButton from "@/components/GoogleLoginButton";
 
 export default function Login() {
-    const { login } = useAuth();
+    const { login, user, loading: authLoading } = useAuth();
     const { lang, t } = useLang();
     const nav = useNavigate();
+
+    useEffect(() => {
+        if (!authLoading && user) nav(`/${lang}/dashboard`, { replace: true });
+    }, [user, authLoading, lang, nav]);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
