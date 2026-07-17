@@ -12,10 +12,10 @@ export default function About() {
             <PageSeo
                 lang={lang}
                 path={`/${lang}/about`}
-                title={t("Tentang Kami", "About")}
+                title={t("Tentang", "About")}
                 description={t(
-                    "Tentang MSNCode — blog bilingual (ID + EN) untuk developer: tutorial, solusi error, karir, dan indie hacking.",
-                    "About MSNCode — a bilingual (ID + EN) blog for developers: tutorials, error fixes, career, and indie hacking."
+                    "Tentang MSNCode — catatan developer Indonesia soal coding, AI, finansial, dan indie hacking. ID + EN.",
+                    "About MSNCode — notes from an Indonesian developer on coding, AI, finance, and indie hacking. ID + EN."
                 )}
             />
             <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">
@@ -28,33 +28,33 @@ export default function About() {
             <div className="prose-article">
                 <p>
                     {t(
-                        `${SITE_NAME} adalah blog bilingual (Bahasa Indonesia & Inggris) yang dibuat untuk developer — dari yang baru mulai hingga senior. Kami menulis tutorial mendalam, solusi error dunia nyata, ulasan tools, serta cerita seputar karir dan indie hacking.`,
-                        `${SITE_NAME} is a bilingual (Indonesian & English) blog built for developers — from beginners to seniors. We publish in-depth tutorials, real-world error fixes, tool reviews, and stories about career and indie hacking.`
+                        `${SITE_NAME} adalah catatan saya — seorang developer Indonesia yang kerja remote, ngelatih model AI, dan sekalian ngurusin duit sendiri. Saya nulis apa yang saya pelajarin: tutorial coding yang gue (eh, saya) sendiri butuh, solusi error yang wasted jam saya, sampai gimana ngatur gaji USD dari perspektif developer. Ditulis dalam Bahasa Indonesia & Inggris.`,
+                        `${SITE_NAME} is my notebook — an Indonesian developer working remote, training AI models, and figuring out money along the way. I write what I learn: coding tutorials I actually needed, error fixes that cost me hours, and how to manage a USD income from a developer's perspective. Written in both Indonesian and English.`
                     )}
                 </p>
                 <p>
                     {t(
-                        "Tujuan kami sederhana: menyajikan konten teknis yang jelas, jujur, dan bisa langsung dipakai — tanpa basa-basi. Setiap artikel tersedia dalam dua bahasa agar bisa dinikmati pembaca Indonesia maupun global.",
-                        "Our goal is simple: clear, honest, immediately-usable technical content — no fluff. Every article is available in two languages so both Indonesian and global readers can enjoy it."
+                        "Tujuannya sederhana: konten teknis yang jujur dan langsung kepake — tanpa embel-embel 'thought leader' atau hype. Kalau saya belum ngerjain sendiri, saya gak nulis.",
+                        "The goal is simple: honest, immediately-usable technical content — no 'thought leader' posturing, no hype. If I haven't done it myself, I don't write about it."
                     )}
                 </p>
 
-                <h2>{t("Apa yang kami tulis", "What we write about")}</h2>
+                <h2>{t("Yang saya tulis", "What I write about")}</h2>
                 <ul>
-                    <li>{t("Tutorial coding & solusi error", "Coding tutorials & error solutions")}</li>
-                    <li>{t("AI, prompt engineering, & AI agents", "AI, prompt engineering, & AI agents")}</li>
-                    <li>{t("Karir, interview, & finansial developer", "Career, interviews, & developer finance")}</li>
-                    <li>{t("SaaS, indie hacking, blockchain & trading", "SaaS, indie hacking, blockchain & trading")}</li>
+                    <li>{t("Tutorial coding & solusi error (dari pengalaman, bukan teori)", "Coding tutorials & error solutions (from experience, not theory)")}</li>
+                    <li>{t("AI, prompt engineering, & AI agents — yang gue pake beneran", "AI, prompt engineering, & AI agents — what I actually use")}</li>
+                    <li>{t("Karir, interview, & finansial developer (remote USD, pajak, ETF)", "Career, interviews, & developer finance (remote USD, taxes, ETFs)")}</li>
+                    <li>{t("SaaS, indie hacking, blockchain & trading (dengan angle dev)", "SaaS, indie hacking, blockchain & trading (from a dev angle)")}</li>
                 </ul>
 
-                <h2>{t("Ingin berkontribusi?", "Want to contribute?")}</h2>
+                <h2>{t("Mau nulis bareng?", "Want to write along?")}</h2>
                 <p>
                     {t(
-                        "Kami terbuka untuk penulis tamu. ",
-                        "We welcome guest authors. "
+                        "Saya terbuka untuk penulis tamu yang punya pengalaman konkret — bukan rewrite AI atau konten generic. ",
+                        "I'm open to guest writers with concrete experience — not AI rewrites or generic content. "
                     )}
                     <Link to={`/${lang}/register`}>{t("Daftar di sini", "Sign up here")}</Link>
-                    {t(" atau hubungi kami lewat halaman ", " or reach us via the ")}
+                    {t(" atau hubungi saya lewat halaman ", " or reach me via the ")}
                     <Link to={`/${lang}/contact`}>{t("Kontak", "Contact")}</Link>.
                 </p>
             </div>

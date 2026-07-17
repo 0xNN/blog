@@ -146,6 +146,14 @@ All passwords: `devpassword` (bcrypt-hashed in seed). These only exist after `su
 - **Affiliate links** — `affiliate_links` table, managed by owner only. Redirect via `/r/<id>` (tracked). Frontend `AffiliateBox.jsx` shows links per category on article pages. `affiliateHref()` in `api.js` builds same-origin `/r/` URLs (proxied by Vercel).
 - **Ads** — `AdSlot.jsx` component + `ads.txt` served from the `seo` function. Per-article `ads_enabled` flag controls display. AdSense publisher ID: `pub-1997030082284033`.
 
+## Voice & content (READ `VOICE.md` before writing any article or frontend copy)
+- `VOICE.md` at repo root — house voice guide. MSNCode = one Indonesian developer writing from experience, not a corporate blog or AI.
+- Articles use `gue`/`lo`; formal pages (About, Contact) use `saya`; UI copy is neutral/imperative. Never `kami` outside legal pages.
+- Never use "bilingual" as a feature adjective — use "ID + EN" or "Bahasa Indonesia & Inggris".
+- Every article needs: personal hook in first 1-3 lines, ≥1 concrete anecdote, italic closing with a specific action (not aphorism).
+- Non-coding topics (finance, trading, blockchain) MUST carry a developer angle — remote USD/NPWP/W-8BEN, backtesting in Python, whitepaper reading, etc. — not generic essay-voice.
+- Forbidden AI patterns and full checklist: see `VOICE.md`.
+
 ## Legacy / migration artifacts
 - `backend/` — empty `.venv` shell from the old FastAPI stack. Ignore.
 - `backend_supabase/scripts/migrate_mongo_to_supabase.py` — one-time migration script from MongoDB to Supabase.

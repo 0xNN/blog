@@ -38,10 +38,10 @@ function StatCard({ icon: Icon, value, label }) {
 const BENEFITS = [
     {
         icon: Globe2,
-        title_id: "Jangkauan Bilingual",
-        title_en: "Bilingual Reach",
-        desc_id: "Setiap artikel dipublikasikan dalam Bahasa Indonesia dan Inggris, menjangkau pembaca lokal maupun global.",
-        desc_en: "Every article is published in both Indonesian and English, reaching both local and global readers.",
+        title_id: "ID + EN",
+        title_en: "ID + EN",
+        desc_id: "Setiap artikel ditulis dalam Bahasa Indonesia dan Inggris — menjangkau pembaca lokal dan global.",
+        desc_en: "Every article is written in both Indonesian and English — reaching both local and global readers.",
     },
     {
         icon: TrendingUp,
@@ -243,7 +243,7 @@ export default function AuthorsPage() {
                 </h2>
                 <p className="font-body text-muted-foreground mb-8 max-w-2xl">
                     {t(
-                        "Kontributor dipilih melalui undangan email untuk menjaga kualitas konten. Kirim proposal kamu dan kami akan menghubungi via email.",
+                        "Kontributor dipilih melalui undangan email untuk menjaga kualitas konten. Kirim proposal kamu dan saya akan menghubungi via email.",
                         "Contributors are invited via email to maintain content quality. Send your proposal and we'll reach out via email."
                     )}
                 </p>

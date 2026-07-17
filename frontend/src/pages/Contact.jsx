@@ -26,14 +26,14 @@ export default function Contact() {
                 {t("Kontak", "Contact")}
             </div>
             <h1 className="font-heading text-4xl sm:text-5xl font-black tracking-tight mb-6">
-                {t("Hubungi Kami", "Get in Touch")}
+                {t("Hubungi", "Get in Touch")}
             </h1>
 
             <div className="prose-article">
                 <p>
                     {t(
-                        "Punya pertanyaan, masukan, tawaran kerja sama, atau ingin menjadi penulis tamu? Kami senang mendengar dari Anda.",
-                        "Have a question, feedback, a partnership idea, or want to write for us? We'd love to hear from you."
+                        "Punya pertanyaan, masukan, tawaran kerja sama, atau ingin menjadi penulis tamu? Saya senang mendengar dari Anda.",
+                        "Have a question, feedback, a partnership idea, or want to write for this blog? I'd love to hear from you."
                     )}
                 </p>
             </div>

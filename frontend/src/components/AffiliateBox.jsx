@@ -67,7 +67,7 @@ export default function AffiliateBox({ category, articleId, title }) {
             <div className="mt-4 flex items-center gap-1.5 text-[11px] text-muted-foreground/70">
                 <ShieldAlert className="h-3 w-3" />
                 {t(
-                    "Artikel ini memuat link afiliasi. Kami mungkin mendapat komisi jika Anda membeli lewat link tersebut, tanpa biaya tambahan bagi Anda.",
+                    "Artikel ini memuat link afiliasi. Saya mungkin mendapat komisi jika Anda membeli lewat link tersebut, tanpa biaya tambahan bagi Anda.",
                     "This article contains affiliate links. We may earn a commission if you buy via these links, at no extra cost to you."
                 )}
             </div>

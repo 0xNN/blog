@@ -60,3 +60,4 @@ articles/
 
 # Seed Articles
 backend_supabase/seed_articles_new.sql
+backend_supabase/seed_deep_learning.sql
