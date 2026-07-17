@@ -23,6 +23,7 @@
     { "source": "/og-image.png", "destination": "/og-image.png" },
     { "source": "/og-image.svg", "destination": "/og-image.svg" },
     { "source": "/site.webmanifest", "destination": "/site.webmanifest" },
+    { "source": "/google:file.html", "destination": "/google:file.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
