@@ -1,10 +1,39 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { Copy, Check, Play, ChevronDown, Terminal } from "lucide-react";
-import { Sandpack } from "@codesandbox/sandpack-react";
+
+const Sandpack = lazy(() => import("@codesandbox/sandpack-react").then(m => ({ default: m.Sandpack })));
+
+import { PrismLight } from "react-syntax-highlighter";
+import bash from "react-syntax-highlighter/dist/esm/languages/prism/bash";
+import javascript from "react-syntax-highlighter/dist/esm/languages/prism/javascript";
+import jsx from "react-syntax-highlighter/dist/esm/languages/prism/jsx";
+import typescript from "react-syntax-highlighter/dist/esm/languages/prism/typescript";
+import tsx from "react-syntax-highlighter/dist/esm/languages/prism/tsx";
+import python from "react-syntax-highlighter/dist/esm/languages/prism/python";
+import json from "react-syntax-highlighter/dist/esm/languages/prism/json";
+import css from "react-syntax-highlighter/dist/esm/languages/prism/css";
+import sql from "react-syntax-highlighter/dist/esm/languages/prism/sql";
+import go from "react-syntax-highlighter/dist/esm/languages/prism/go";
+import rust from "react-syntax-highlighter/dist/esm/languages/prism/rust";
+import java from "react-syntax-highlighter/dist/esm/languages/prism/java";
+import php from "react-syntax-highlighter/dist/esm/languages/prism/php";
+import yaml from "react-syntax-highlighter/dist/esm/languages/prism/yaml";
+import markdown from "react-syntax-highlighter/dist/esm/languages/prism/markdown";
+import docker from "react-syntax-highlighter/dist/esm/languages/prism/docker";
+
+const REGISTERED_LANGS = {
+  bash, shell: bash, javascript, js: javascript, jsx, typescript, ts: typescript, tsx,
+  python, py: python, json, css, sql, go, rust, java, php, yaml, yml: yaml,
+  markdown, md: markdown, dockerfile: docker, docker, text: undefined,
+};
+
+const oneDarkPromise = import("react-syntax-highlighter/dist/esm/styles/prism").then(m => m.oneDark);
+
+Object.entries(REGISTERED_LANGS).forEach(([name, mod]) => {
+    if (mod) PrismLight.registerLanguage(name, mod);
+});
 
 const LANG_LABELS = {
   bash: "Bash",
@@ -13,7 +42,6 @@ const LANG_LABELS = {
   javascript: "JavaScript",
   jsx: "JSX",
   ts: "TypeScript",
-  tsx: "TSX",
   tsx: "TSX",
   python: "Python",
   py: "Python",
@@ -62,6 +90,49 @@ const LANG_COLORS = {
 };
 
 const COLLAPSE_THRESHOLD = 18;
+
+function LazySyntaxHighlighter({ lang, code, lineCount }) {
+    const [style, setStyle] = useState(null);
+
+    useEffect(() => {
+        let active = true;
+        oneDarkPromise.then(s => { if (active) setStyle(s); });
+        return () => { active = false; };
+    }, []);
+
+    if (!style) {
+        return (
+            <pre style={{ margin: 0, background: "transparent", padding: "1rem 1.25rem", fontSize: "0.8125rem", fontFamily: "JetBrains Mono, monospace", overflowX: "auto" }}>
+                <code>{code}</code>
+            </pre>
+        );
+    }
+
+    const langMod = REGISTERED_LANGS[lang.toLowerCase()];
+
+    return (
+        <PrismLight
+            language={langMod ? lang : "text"}
+            style={style}
+            showLineNumbers={lineCount > 3}
+            customStyle={{
+                margin: 0,
+                background: "transparent",
+                padding: "1rem 1.25rem",
+                fontSize: "0.8125rem",
+            }}
+            lineNumberStyle={{
+                color: "rgba(255,255,255,0.15)",
+                fontSize: "0.75rem",
+                paddingRight: "1.5em",
+                userSelect: "none",
+            }}
+            codeTagProps={{ style: { fontFamily: "JetBrains Mono, monospace" } }}
+        >
+            {code}
+        </PrismLight>
+    );
+}
 
 function CodeBlock({ inline, className, children, ...props }) {
     const [copied, setCopied] = useState(false);
@@ -164,26 +235,13 @@ function CodeBlock({ inline, className, children, ...props }) {
                 className="relative overflow-auto"
                 style={isCollapsed ? { maxHeight: "18rem" } : undefined}
             >
-                <SyntaxHighlighter
-                    language={lang}
-                    style={oneDark}
-                    showLineNumbers={lineCount > 3}
-                    customStyle={{
-                        margin: 0,
-                        background: "transparent",
-                        padding: "1rem 1.25rem",
-                        fontSize: "0.8125rem",
-                    }}
-                    lineNumberStyle={{
-                        color: "rgba(255,255,255,0.15)",
-                        fontSize: "0.75rem",
-                        paddingRight: "1.5em",
-                        userSelect: "none",
-                    }}
-                    codeTagProps={{ style: { fontFamily: "JetBrains Mono, monospace" } }}
-                >
-                    {code}
-                </SyntaxHighlighter>
+                <Suspense fallback={
+                    <pre className="margin: 0; background: transparent; padding: 1rem 1.25rem; font-size: 0.8125rem; font-family: JetBrains Mono, monospace; overflow-x: auto;">
+                        <code>{code}</code>
+                    </pre>
+                }>
+                    <LazySyntaxHighlighter lang={lang} code={code} lineCount={lineCount} />
+                </Suspense>
 
                 {/* Gradient fade when collapsed */}
                 {isCollapsed && (
@@ -205,12 +263,18 @@ function CodeBlock({ inline, className, children, ...props }) {
             {/* Playground */}
             {canPlayground && playgroundOpen && (
                 <div className="border-t border-white/[0.06]">
-                    <Sandpack
-                        template={lang === "tsx" || lang === "ts" ? "react-ts" : "react"}
-                        theme="dark"
-                        files={{ "/App.js": code.includes("export default") ? code : `export default function App(){\n${code}\n}` }}
-                        options={{ showTabs: false, showLineNumbers: true, editorHeight: 320 }}
-                    />
+                    <Suspense fallback={
+                        <div className="flex items-center justify-center h-[320px] text-sm text-muted-foreground">
+                            Loading playground...
+                        </div>
+                    }>
+                        <Sandpack
+                            template={lang === "tsx" || lang === "ts" ? "react-ts" : "react"}
+                            theme="dark"
+                            files={{ "/App.js": code.includes("export default") ? code : `export default function App(){\n${code}\n}` }}
+                            options={{ showTabs: false, showLineNumbers: true, editorHeight: 320 }}
+                        />
+                    </Suspense>
                 </div>
             )}
         </div>
