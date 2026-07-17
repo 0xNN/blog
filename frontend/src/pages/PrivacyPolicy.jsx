@@ -115,10 +115,10 @@ export default function PrivacyPolicy() {
 
             <Section title={t("Layanan Pihak Ketiga", "Third-Party Services")}>
                 <ul>
-                    <li>{t("Google AdSense — iklan", "Google AdSense — advertising")}</li>
-                    <li>{t("PostHog — analitik produk", "PostHog — product analytics")}</li>
-                    <li>{t("Resend — pengiriman email newsletter", "Resend — newsletter email delivery")}</li>
-                    <li>{t("Google — login opsional (OAuth)", "Google — optional sign-in (OAuth)")}</li>
+                    <li>{t("Google AdSense - iklan", "Google AdSense - advertising")}</li>
+                    <li>{t("PostHog - analitik produk", "PostHog - product analytics")}</li>
+                    <li>{t("Resend - pengiriman email newsletter", "Resend - newsletter email delivery")}</li>
+                    <li>{t("Google - login opsional (OAuth)", "Google - optional sign-in (OAuth)")}</li>
                 </ul>
             </Section>
 

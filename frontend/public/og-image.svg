@@ -1,0 +1,96 @@
+<svg width="1792" height="1024" viewBox="0 0 1792 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1792" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#050505"/>
+      <stop offset="0.5" stop-color="#0a0f0e"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#1a9e80"/>
+      <stop offset="1" stop-color="#0d7d63"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1792" height="1024" fill="url(#bgGrad)"/>
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.04" stroke="#1a9e80" stroke-width="1">
+    <line x1="0" y1="128" x2="1792" y2="128"/>
+    <line x1="0" y1="256" x2="1792" y2="256"/>
+    <line x1="0" y1="384" x2="1792" y2="384"/>
+    <line x1="0" y1="512" x2="1792" y2="512"/>
+    <line x1="0" y1="640" x2="1792" y2="640"/>
+    <line x1="0" y1="768" x2="1792" y2="768"/>
+    <line x1="0" y1="896" x2="1792" y2="896"/>
+    <line x1="128" y1="0" x2="128" y2="1024"/>
+    <line x1="256" y1="0" x2="256" y2="1024"/>
+    <line x1="384" y1="0" x2="384" y2="1024"/>
+    <line x1="512" y1="0" x2="512" y2="1024"/>
+    <line x1="640" y1="0" x2="640" y2="1024"/>
+    <line x1="768" y1="0" x2="768" y2="1024"/>
+    <line x1="896" y1="0" x2="896" y2="1024"/>
+    <line x1="1024" y1="0" x2="1024" y2="1024"/>
+    <line x1="1152" y1="0" x2="1152" y2="1024"/>
+    <line x1="1280" y1="0" x2="1280" y2="1024"/>
+    <line x1="1408" y1="0" x2="1408" y2="1024"/>
+    <line x1="1536" y1="0" x2="1536" y2="1024"/>
+    <line x1="1664" y1="0" x2="1664" y2="1024"/>
+  </g>
+
+  <!-- Accent glow top-left -->
+  <circle cx="200" cy="200" r="300" fill="#1a9e80" opacity="0.06" filter="url(#glow)"/>
+
+  <!-- Code bracket logo /> -->
+  <g transform="translate(896, 180)">
+    <!-- Left bracket < -->
+    <path d="M -60 -50 L -110 0 L -60 50" stroke="url(#accentGrad)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <!-- Slash / -->
+    <path d="M -20 -55 L 30 55" stroke="url(#accentGrad)" stroke-width="14" stroke-linecap="round" fill="none"/>
+    <!-- Right bracket > -->
+    <path d="M 60 -50 L 110 0 L 60 50" stroke="url(#accentGrad)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+
+  <!-- Brand name -->
+  <text x="896" y="340" text-anchor="middle" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="96" font-weight="900" fill="#f5f5f5" letter-spacing="-3">
+    MSNCode
+  </text>
+
+  <!-- Tagline line 1 -->
+  <text x="896" y="440" text-anchor="middle" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="42" font-weight="600" fill="#1a9e80" letter-spacing="2">
+    Blog Developer ID + EN
+  </text>
+
+  <!-- Tagline line 2 -->
+  <text x="896" y="510" text-anchor="middle" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="400" fill="#999999" letter-spacing="0.5">
+    Tutorial mendalam, solusi error real-world,
+  </text>
+  <text x="896" y="560" text-anchor="middle" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="400" fill="#999999" letter-spacing="0.5">
+    dan cerita indie hacker untuk developer.
+  </text>
+
+  <!-- Bottom accent bar -->
+  <rect x="746" y="640" width="300" height="4" rx="2" fill="url(#accentGrad)" opacity="0.6"/>
+
+  <!-- Code-like decorative elements -->
+  <g transform="translate(140, 700)" opacity="0.12" font-family="'Cascadia Code', 'Consolas', 'Courier New', monospace" font-size="20" fill="#1a9e80">
+    <text x="0" y="0">const dev = {</text>
+    <text x="20" y="32">lang: ['id', 'en'],</text>
+    <text x="20" y="64">stack: ['react', 'supabase'],</text>
+    <text x="20" y="96">focus: 'ship fast',</text>
+    <text x="0" y="128">}</text>
+  </g>
+
+  <g transform="translate(1400, 700)" opacity="0.12" font-family="'Cascadia Code', 'Consolas', 'Courier New', monospace" font-size="20" fill="#1a9e80">
+    <text x="0" y="0">// gue nulis</text>
+    <text x="0" y="32">// dari pengalaman</text>
+    <text x="0" y="64">// bukan dari AI</text>
+  </g>
+</svg>

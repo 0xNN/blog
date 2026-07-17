@@ -47,7 +47,7 @@ export default function Home() {
             <PageSeo
                 lang={lang}
                 path={`/${lang}`}
-                title={lang === "id" ? "MSNCode — Tutorial, Cerita & Tools Developer" : "MSNCode — Dev Tutorials, Stories & Tools"}
+                title={lang === "id" ? "MSNCode - Tutorial, Cerita & Tools Developer" : "MSNCode - Dev Tutorials, Stories & Tools"}
                 description={lang === "id"
                     ? "Tutorial mendalam, solusi error real-world, dan cerita indie hacker untuk developer Indonesia dan global."
                     : "In-depth tutorials, real-world error fixes, and indie hacker stories for developers worldwide."}

@@ -5,7 +5,7 @@ import { Mail, Github, Twitter } from "lucide-react";
 
 // Ganti dengan info kontak publik Anda.
 const CONTACT_EMAIL = "hello@msncode.dev";
-const TWITTER = "";   // mis. "sendinov" — kosongkan untuk sembunyikan
+const TWITTER = "";   // mis. "sendinov" - kosongkan untuk sembunyikan
 const GITHUB = "";    // mis. "sendinoviansyah"
 
 export default function Contact() {
@@ -18,8 +18,8 @@ export default function Contact() {
                 path={`/${lang}/contact`}
                 title={t("Kontak", "Contact")}
                 description={t(
-                    "Hubungi tim MSNCode — pertanyaan, kerja sama, atau menjadi penulis tamu.",
-                    "Get in touch with the MSNCode team — questions, partnerships, or guest writing."
+                    "Hubungi tim MSNCode - pertanyaan, kerja sama, atau menjadi penulis tamu.",
+                    "Get in touch with the MSNCode team - questions, partnerships, or guest writing."
                 )}
             />
             <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">
@@ -77,8 +77,8 @@ export default function Contact() {
                 </div>
                 <p className="text-sm text-muted-foreground font-body mb-4">
                     {t(
-                        "Cara termudah tetap terhubung — tips dev & artikel baru langsung ke inbox.",
-                        "The easiest way to stay in touch — dev tips & new articles straight to your inbox."
+                        "Cara termudah tetap terhubung - tips dev & artikel baru langsung ke inbox.",
+                        "The easiest way to stay in touch - dev tips & new articles straight to your inbox."
                     )}
                 </p>
                 <NewsletterForm />
