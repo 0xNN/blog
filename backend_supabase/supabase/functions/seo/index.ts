@@ -127,7 +127,7 @@ async function handleRss(lang: string, req: Request) {
     '<rss version="2.0"><channel>',
     `  <title>${siteTitle}</title>`,
     `  <link>${BASE_URL}/${lang}</link>`,
-    "  <description>Bilingual blog for developers</description>",
+    "  <description>Developer blog in Indonesian & English</description>",
     `  <language>${langCode}</language>`,
     ...items,
     "</channel></rss>",

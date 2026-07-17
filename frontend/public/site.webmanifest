@@ -1,7 +1,7 @@
 {
   "name": "MSNCode",
   "short_name": "MSNCode",
-  "description": "Blog bilingual (ID + EN) untuk developer: tutorial, solusi error, AI, karir, dan indie hacking.",
+  "description": "Blog developer (ID + EN): tutorial, solusi error, AI, karir, dan indie hacking.",
   "start_url": "/id",
   "display": "standalone",
   "background_color": "#050505",
