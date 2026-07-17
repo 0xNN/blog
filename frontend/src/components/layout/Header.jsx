@@ -148,7 +148,7 @@ export default function Header() {
                                 <NavigationMenuItem>
                                     <NavigationMenuTrigger
                                         data-testid="nav-more-trigger"
-                                        className="link-underline h-auto bg-transparent px-0 py-0.5 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=open]:bg-transparent data-[state=open]:text-foreground"
+                                        className="h-auto rounded-md bg-transparent px-2.5 py-1 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=open]:bg-transparent data-[state=open]:text-foreground"
                                     >
                                         {t("Lainnya", "More")}
                                     </NavigationMenuTrigger>
