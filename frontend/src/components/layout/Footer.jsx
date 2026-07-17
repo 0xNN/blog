@@ -7,8 +7,10 @@ import BrandMark from "@/components/BrandMark";
 const EXPLORE_LINKS = [
     { slug: "blog", labelId: "Semua Artikel", labelEn: "All Articles", testId: "footer-blog" },
     { slug: "category/tutorial-coding", labelId: "Tutorial", labelEn: "Tutorials" },
+    { slug: "category/system-design", labelId: "System Design", labelEn: "System Design" },
     { slug: "category/ai-prompt", labelId: "AI & Prompt", labelEn: "AI & Prompt" },
     { slug: "category/ai-agents", labelId: "AI Agents", labelEn: "AI Agents" },
+    { slug: "category/security-privacy", labelId: "Security", labelEn: "Security" },
     { slug: "category/saas-indie", labelId: "SaaS & Indie", labelEn: "SaaS & Indie" },
     { slug: "category/blockchain-crypto", labelId: "Crypto", labelEn: "Crypto" },
 ];

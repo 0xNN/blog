@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, TrendingUp, Code2, Bug, Wrench, DollarSign, Sparkles, Bot, GraduationCap, Zap, Rocket, Network } from "lucide-react";
+import { ArrowRight, TrendingUp, Code2, Bug, Wrench, DollarSign, Sparkles, Bot, GraduationCap, Zap, Rocket, Network, Workflow, Database, Server, FlaskConical, ShieldCheck, Command, Brain } from "lucide-react";
 import api from "@/lib/api";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,15 +14,27 @@ import FeaturedCarousel from "@/components/FeaturedCarousel";
 const FEATURED_COUNT = 3;
 
 const PILLARS = [
+    // Engineering & coding core
     { slug: "tutorial-coding",   icon: Code2,        id: "Tutorial Coding",     en: "Coding Tutorials",    desc_id: "Panduan langkah demi langkah", desc_en: "Step-by-step guides" },
     { slug: "error-solutions",   icon: Bug,          id: "Fix Error",           en: "Error Solutions",     desc_id: "Solusi cepat untuk bug",       desc_en: "Fast fixes for bugs" },
+    { slug: "system-design",     icon: Workflow,     id: "System Design",       en: "System Design",       desc_id: "Skala arsitektur sistem",      desc_en: "Scale system architecture" },
+    { slug: "database-data",     icon: Database,     id: "Database",            en: "Database",            desc_id: "SQL, NoSQL, data engineering", desc_en: "SQL, NoSQL, data engineering" },
+    { slug: "devops-infra",      icon: Server,       id: "DevOps",              en: "DevOps",              desc_id: "Docker, CI/CD, server",        desc_en: "Docker, CI/CD, servers" },
+    { slug: "testing-quality",   icon: FlaskConical, id: "Testing",             en: "Testing",             desc_id: "Test & review kode",           desc_en: "Test & review code" },
+    { slug: "security-privacy",  icon: ShieldCheck,  id: "Security",            en: "Security",            desc_id: "Auth, OWASP, enkripsi",        desc_en: "Auth, OWASP, encryption" },
+    { slug: "dev-workflow",      icon: Command,      id: "Workflow",            en: "Workflow",            desc_id: "Shell, editor, CLI",          desc_en: "Shell, editor, CLI" },
+    // Tools & platforms
     { slug: "tools-review",      icon: Wrench,       id: "Review Tools",        en: "Tools Review",        desc_id: "Ulasan tools developer",        desc_en: "Dev tool reviews" },
-    { slug: "developer-finance", icon: DollarSign,   id: "Finansial Dev",       en: "Dev Finance",         desc_id: "Kelola keuangan dev",           desc_en: "Manage dev money" },
+    { slug: "nocode-lowcode",    icon: Zap,          id: "No-Code",             en: "No-Code",             desc_id: "Bangun tanpa koding",           desc_en: "Build without code" },
+    // AI
     { slug: "ai-prompt",         icon: Sparkles,     id: "AI & Prompt",         en: "AI & Prompts",        desc_id: "AI untuk developer",            desc_en: "AI for developers" },
     { slug: "ai-agents",         icon: Bot,          id: "AI Agents",           en: "AI Agents",           desc_id: "Bangun agent otonom",           desc_en: "Build autonomous agents" },
+    // Career & business
     { slug: "career-interview",  icon: GraduationCap,id: "Karir & Interview",   en: "Career",              desc_id: "Naik level karir",              desc_en: "Level up your career" },
-    { slug: "nocode-lowcode",    icon: Zap,          id: "No-Code",             en: "No-Code",             desc_id: "Bangun tanpa koding",           desc_en: "Build without code" },
+    { slug: "developer-finance", icon: DollarSign,   id: "Finansial Dev",       en: "Dev Finance",         desc_id: "Kelola keuangan dev",           desc_en: "Manage dev money" },
     { slug: "saas-indie",        icon: Rocket,       id: "SaaS & Indie",        en: "SaaS & Indie",        desc_id: "Journey indie hacker",          desc_en: "Indie hacker journey" },
+    { slug: "learning-mindset",  icon: Brain,        id: "Mindset",             en: "Mindset",             desc_id: "Belajar & burnout",             desc_en: "Learning & burnout" },
+    // Web3 & markets
     { slug: "blockchain-crypto", icon: Network,      id: "Blockchain & Crypto", en: "Blockchain & Crypto", desc_id: "Web3, smart contracts, DeFi",  desc_en: "Web3, smart contracts, DeFi" },
     { slug: "trading",           icon: TrendingUp,   id: "Trading",             en: "Trading",             desc_id: "Stock, Crypto, Forex",          desc_en: "Stock, Crypto, Forex" },
 ];
@@ -137,7 +149,7 @@ export default function Home() {
                         {t("Lihat semua", "See all")} <ArrowRight className="h-3 w-3" />
                     </Link>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
                     {PILLARS.map((p) => {
                         const Icon = p.icon;
                         return (
@@ -154,7 +166,7 @@ export default function Home() {
                                 <Icon
                                     aria-hidden="true"
                                     strokeWidth={1}
-                                    className="absolute -bottom-3 -right-3 h-20 w-20 text-[hsl(var(--accent))]/[0.07] group-hover:text-[hsl(var(--accent))]/[0.14] transition-colors duration-500 pointer-events-none"
+                                    className="absolute -bottom-2 -right-2 h-14 w-14 xl:h-16 xl:w-16 text-[hsl(var(--accent))]/[0.07] group-hover:text-[hsl(var(--accent))]/[0.14] transition-colors duration-500 pointer-events-none"
                                 />
 
                                 <div className="relative p-4 lg:p-5">

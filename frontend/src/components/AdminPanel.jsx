@@ -8,9 +8,12 @@ import Pagination from "@/components/Pagination";
 const PER_PAGE = 10;
 const ROLE_OPTIONS = ["author", "editor"];
 const CATEGORIES = [
-    "tutorial-coding", "error-solutions", "tools-review", "developer-finance",
-    "ai-prompt", "ai-agents", "career-interview", "nocode-lowcode",
-    "saas-indie", "blockchain-crypto", "trading",
+    "tutorial-coding", "error-solutions", "system-design", "database-data",
+    "devops-infra", "testing-quality", "security-privacy", "dev-workflow",
+    "tools-review", "nocode-lowcode",
+    "ai-prompt", "ai-agents",
+    "career-interview", "developer-finance", "saas-indie", "learning-mindset",
+    "blockchain-crypto", "trading",
 ];
 
 function SkeletonRow() {

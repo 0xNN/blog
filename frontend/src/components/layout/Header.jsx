@@ -1,14 +1,24 @@
 import { Link, NavLink, useLocation, useNavigate, useMatch } from "react-router-dom";
-import { Moon, Sun, Menu, X, Search, PenSquare, LogOut, Layout } from "lucide-react";
+import { Moon, Sun, Menu, X, Search, PenSquare, LogOut, Layout, ChevronRight } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import api from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import {
+    NavigationMenu,
+    NavigationMenuContent,
+    NavigationMenuItem,
+    NavigationMenuLink,
+    NavigationMenuList,
+    NavigationMenuTrigger,
+    navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
 import BrandMark from "@/components/BrandMark";
 
-const CATEGORIES = [
+// Primary categories shown inline in the desktop navbar (quick access).
+const PRIMARY_CATS = [
     { slug: "tutorial-coding", id: "Tutorial", en: "Tutorial" },
     { slug: "ai-prompt", id: "AI & Prompt", en: "AI & Prompt" },
     { slug: "ai-agents", id: "AI Agents", en: "AI Agents" },
@@ -16,6 +26,40 @@ const CATEGORIES = [
     { slug: "trading", id: "Trading", en: "Trading" },
     { slug: "saas-indie", id: "SaaS", en: "SaaS" },
 ];
+
+// Remaining categories, grouped, surfaced via the "More" dropdown.
+const MORE_GROUPS = [
+    {
+        label_id: "Engineering", label_en: "Engineering",
+        items: [
+            { slug: "error-solutions", id: "Fix Error", en: "Error Fixes" },
+            { slug: "system-design", id: "System Design", en: "System Design" },
+            { slug: "database-data", id: "Database", en: "Database" },
+            { slug: "devops-infra", id: "DevOps", en: "DevOps" },
+            { slug: "testing-quality", id: "Testing", en: "Testing" },
+            { slug: "security-privacy", id: "Security", en: "Security" },
+            { slug: "dev-workflow", id: "Workflow", en: "Workflow" },
+        ],
+    },
+    {
+        label_id: "Tools", label_en: "Tools",
+        items: [
+            { slug: "tools-review", id: "Review Tools", en: "Tools Review" },
+            { slug: "nocode-lowcode", id: "No-Code", en: "No-Code" },
+        ],
+    },
+    {
+        label_id: "Karir", label_en: "Career",
+        items: [
+            { slug: "career-interview", id: "Karir & Interview", en: "Career" },
+            { slug: "developer-finance", id: "Finansial Dev", en: "Dev Finance" },
+            { slug: "learning-mindset", id: "Mindset", en: "Mindset" },
+        ],
+    },
+];
+
+// Flattened full list for the mobile menu.
+const ALL_CATS = [...PRIMARY_CATS, ...MORE_GROUPS.flatMap((g) => g.items)];
 
 export default function Header() {
     const { theme, toggle } = useTheme();
@@ -87,7 +131,7 @@ export default function Header() {
                     </Link>
 
                     <nav className="hidden lg:flex items-center gap-5 text-sm font-medium">
-                        {CATEGORIES.map((c) => (
+                        {PRIMARY_CATS.map((c) => (
                             <NavLink
                                 key={c.slug}
                                 to={`${langPrefix}/category/${c.slug}`}
@@ -99,6 +143,43 @@ export default function Header() {
                                 {lang === "id" ? c.id : c.en}
                             </NavLink>
                         ))}
+                        <NavigationMenu className="relative">
+                            <NavigationMenuList>
+                                <NavigationMenuItem>
+                                    <NavigationMenuTrigger
+                                        data-testid="nav-more-trigger"
+                                        className="link-underline h-auto bg-transparent px-0 py-0 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=open]:bg-transparent data-[state=open]:text-foreground"
+                                    >
+                                        {t("Lainnya", "More")}
+                                    </NavigationMenuTrigger>
+                                    <NavigationMenuContent>
+                                        <ul className="grid w-[560px] gap-3 p-3 md:grid-cols-[1.2fr_1fr_1fr]">
+                                            {MORE_GROUPS.map((group) => (
+                                                <li key={group.label_en} className="space-y-1">
+                                                    <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                                                        {lang === "id" ? group.label_id : group.label_en}
+                                                    </div>
+                                                    {group.items.map((c) => (
+                                                        <li key={c.slug}>
+                                                            <NavigationMenuLink asChild>
+                                                                <Link
+                                                                    to={`${langPrefix}/category/${c.slug}`}
+                                                                    data-testid={`nav-cat-${c.slug}`}
+                                                                    className="group flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                                                >
+                                                                    <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-[hsl(var(--accent))]" />
+                                                                    <span>{lang === "id" ? c.id : c.en}</span>
+                                                                </Link>
+                                                            </NavigationMenuLink>
+                                                        </li>
+                                                    ))}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </NavigationMenuContent>
+                                </NavigationMenuItem>
+                            </NavigationMenuList>
+                        </NavigationMenu>
                     </nav>
 
                     <div className="flex items-center gap-1.5">
@@ -203,7 +284,7 @@ export default function Header() {
                                 className={`text-xs px-2.5 py-1 rounded-full border border-border transition-colors duration-200 ${lang === "en" ? "bg-[hsl(var(--accent))] text-white border-transparent" : "text-muted-foreground"}`}
                             >EN</button>
                         </div>
-                        {CATEGORIES.map((c) => (
+                        {PRIMARY_CATS.map((c) => (
                             <NavLink
                                 key={c.slug}
                                 to={`${langPrefix}/category/${c.slug}`}
@@ -215,6 +296,26 @@ export default function Header() {
                             >
                                 {lang === "id" ? c.id : c.en}
                             </NavLink>
+                        ))}
+                        {MORE_GROUPS.map((group) => (
+                            <div key={group.label_en} className="py-1">
+                                <div className="px-1 pt-2 pb-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                                    {lang === "id" ? group.label_id : group.label_en}
+                                </div>
+                                {group.items.map((c) => (
+                                    <NavLink
+                                        key={c.slug}
+                                        to={`${langPrefix}/category/${c.slug}`}
+                                        onClick={() => setOpen(false)}
+                                        className={({ isActive }) =>
+                                            `text-sm py-2.5 px-3 border-b border-border last:border-0 transition-colors duration-200 ${isActive ? "text-[hsl(var(--accent))] font-semibold" : "text-muted-foreground hover:text-foreground"}`
+                                        }
+                                        data-testid={`mobile-nav-${c.slug}`}
+                                    >
+                                        {lang === "id" ? c.id : c.en}
+                                    </NavLink>
+                                ))}
+                            </div>
                         ))}
                         {user && user !== false && (
                             <button
