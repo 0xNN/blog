@@ -93,7 +93,7 @@ export default function Header() {
                                 to={`${langPrefix}/category/${c.slug}`}
                                 data-testid={`nav-cat-${c.slug}`}
                                 className={({ isActive }) =>
-                                    `link-underline transition-colors duration-200 ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`
+                                    `link-underline transition-colors duration-200 ${isActive ? "text-foreground link-active" : "text-muted-foreground hover:text-foreground"}`
                                 }
                             >
                                 {lang === "id" ? c.id : c.en}

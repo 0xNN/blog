@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import ScrollToTopButton from "@/components/ScrollToTopButton";
 import Home from "@/pages/Home";
 import ArticleList from "@/pages/ArticleList";
 import ArticleDetail from "@/pages/ArticleDetail";
@@ -34,10 +35,19 @@ function EditorRoute() {
     return <EditorPage key={id} />;
 }
 
+function ScrollToTop() {
+    const { pathname } = useLocation();
+    useEffect(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }, [pathname]);
+    return null;
+}
+
 function AppShell() {
     return (
         <>
             <div className="noise-overlay" />
+            <ScrollToTop />
             <Header />
             <main className="min-h-[70vh] relative z-10">
                 <Routes>
@@ -61,6 +71,7 @@ function AppShell() {
                 </Routes>
             </main>
             <Footer />
+            <ScrollToTopButton />
         </>
     );
 }

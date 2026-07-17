@@ -164,6 +164,7 @@ body {
     padding-bottom: 1px;
 }
 .link-underline:hover { background-size: 100% 1.5px; }
+.link-underline.link-active { background-size: 100% 2px; font-weight: 600; }
 
 /* Accent glow, used sparingly on the hero */
 .accent-glow {
