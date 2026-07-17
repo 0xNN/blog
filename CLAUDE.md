@@ -153,6 +153,7 @@ All passwords: `devpassword` (bcrypt-hashed in seed). These only exist after `su
 - Every article needs: personal hook in first 1-3 lines, ≥1 concrete anecdote, italic closing with a specific action (not aphorism).
 - Non-coding topics (finance, trading, blockchain) MUST carry a developer angle — remote USD/NPWP/W-8BEN, backtesting in Python, whitepaper reading, etc. — not generic essay-voice.
 - Forbidden AI patterns and full checklist: see `VOICE.md`.
+- **Article + seed workflow (IMPORTANT):** `articles/` (markdown ID+EN) and `backend_supabase/seed_*.sql` are **intentionally gitignored** — author keeps them local-only. When asked to create a new article, ALWAYS produce both the ID + EN markdown files under `articles/` AND a matching `backend_supabase/seed_<slug>.sql` file (use Node.js `JSON.stringify` for body_md encoding so `\n` is valid JSON, not literal). Never `git add` these files. Only code/config changes get committed.
 
 ## Legacy / migration artifacts
 - `backend/` — empty `.venv` shell from the old FastAPI stack. Ignore.
