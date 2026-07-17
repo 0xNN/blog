@@ -154,6 +154,7 @@ All passwords: `devpassword` (bcrypt-hashed in seed). These only exist after `su
 - Non-coding topics (finance, trading, blockchain) MUST carry a developer angle — remote USD/NPWP/W-8BEN, backtesting in Python, whitepaper reading, etc. — not generic essay-voice.
 - Forbidden AI patterns and full checklist: see `VOICE.md`.
 - **Article + seed workflow (IMPORTANT):** `articles/` (markdown ID+EN) and `backend_supabase/seed_*.sql` are **intentionally gitignored** — author keeps them local-only. When asked to create a new article, ALWAYS produce both the ID + EN markdown files under `articles/` AND a matching `backend_supabase/seed_<slug>.sql` file (use Node.js `JSON.stringify` for body_md encoding so `\n` is valid JSON, not literal). Never `git add` these files. Only code/config changes get committed.
+- **Commit + push default (IMPORTANT):** After any code/config change that passes lint + build (`npm run build` in `frontend/`), ALWAYS `git commit` + `git push origin main` without being asked. Only skip if: (a) build fails, (b) user explicitly says "don't commit yet", or (c) changes are only to gitignored files (articles/seeds). No "do you want me to commit?" prompt — just do it.
 
 ## Legacy / migration artifacts
 - `backend/` — empty `.venv` shell from the old FastAPI stack. Ignore.

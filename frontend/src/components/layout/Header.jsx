@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation, useNavigate, useMatch } from "react-router-dom";
-import { Moon, Sun, Menu, X, Search, PenSquare, LogOut, Layout, ChevronRight, Workflow, Database, Server, FlaskConical, ShieldCheck, Command, Bug, Wrench, Zap } from "lucide-react";
+import { Moon, Sun, Menu, X, Search, PenSquare, LogOut, Layout } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import api from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -28,38 +28,37 @@ const PRIMARY_CATS = [
 ];
 
 // Remaining categories, grouped, surfaced via the "More" dropdown.
-// Each item carries an icon so the dropdown can reuse the Home pillar card pattern.
 const MORE_GROUPS = [
     {
         label_id: "Engineering", label_en: "Engineering",
         items: [
-            { slug: "error-solutions", id: "Fix Error", en: "Error Fixes", icon: Bug },
-            { slug: "system-design", id: "System Design", en: "System Design", icon: Workflow },
-            { slug: "database-data", id: "Database", en: "Database", icon: Database },
-            { slug: "devops-infra", id: "DevOps", en: "DevOps", icon: Server },
-            { slug: "testing-quality", id: "Testing", en: "Testing", icon: FlaskConical },
-            { slug: "security-privacy", id: "Security", en: "Security", icon: ShieldCheck },
-            { slug: "dev-workflow", id: "Workflow", en: "Workflow", icon: Command },
+            { slug: "error-solutions", id: "Fix Error", en: "Error Fixes" },
+            { slug: "system-design", id: "System Design", en: "System Design" },
+            { slug: "database-data", id: "Database", en: "Database" },
+            { slug: "devops-infra", id: "DevOps", en: "DevOps" },
+            { slug: "testing-quality", id: "Testing", en: "Testing" },
+            { slug: "security-privacy", id: "Security", en: "Security" },
+            { slug: "dev-workflow", id: "Workflow", en: "Workflow" },
         ],
     },
     {
         label_id: "Tools", label_en: "Tools",
         items: [
-            { slug: "tools-review", id: "Review Tools", en: "Tools Review", icon: Wrench },
-            { slug: "nocode-lowcode", id: "No-Code", en: "No-Code", icon: Zap },
+            { slug: "tools-review", id: "Review Tools", en: "Tools Review" },
+            { slug: "nocode-lowcode", id: "No-Code", en: "No-Code" },
         ],
     },
     {
         label_id: "Karir", label_en: "Career",
         items: [
-            { slug: "career-interview", id: "Karir & Interview", en: "Career", icon: ChevronRight },
-            { slug: "developer-finance", id: "Finansial Dev", en: "Dev Finance", icon: ChevronRight },
-            { slug: "learning-mindset", id: "Mindset", en: "Mindset", icon: ChevronRight },
+            { slug: "career-interview", id: "Karir & Interview", en: "Career" },
+            { slug: "developer-finance", id: "Finansial Dev", en: "Dev Finance" },
+            { slug: "learning-mindset", id: "Mindset", en: "Mindset" },
         ],
     },
 ];
 
-// Flattened full list for the mobile menu (icons attached for parity with desktop dropdown).
+// Flattened full list for the mobile menu.
 const ALL_CATS = [...PRIMARY_CATS, ...MORE_GROUPS.flatMap((g) => g.items)];
 
 export default function Header() {
@@ -149,40 +148,31 @@ export default function Header() {
                                 <NavigationMenuItem>
                                     <NavigationMenuTrigger
                                         data-testid="nav-more-trigger"
-                                        className="link-underline h-auto bg-transparent px-0 py-0 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=open]:bg-transparent data-[state=open]:text-foreground"
+                                        className="link-underline h-auto bg-transparent px-0 py-0.5 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=open]:bg-transparent data-[state=open]:text-foreground"
                                     >
                                         {t("Lainnya", "More")}
                                     </NavigationMenuTrigger>
                                     <NavigationMenuContent>
-                                        <div className="grid w-[600px] gap-5 p-4 md:grid-cols-[1.2fr_0.8fr_0.9fr]">
+                                        <div className="grid w-[520px] gap-x-8 gap-y-1 p-4 md:grid-cols-3">
                                             {MORE_GROUPS.map((group) => (
-                                                <div key={group.label_en} className="space-y-2">
-                                                    <div className="eyebrow !text-[0.6rem] !tracking-[0.18em]">
+                                                <div key={group.label_en}>
+                                                    <div className="eyebrow !text-[0.6rem] !tracking-[0.18em] mb-2">
                                                         {lang === "id" ? group.label_id : group.label_en}
                                                     </div>
-                                                    <ul className="space-y-1.5">
-                                                        {group.items.map((c) => {
-                                                            const Icon = c.icon;
-                                                            return (
-                                                                <li key={c.slug}>
-                                                                    <NavigationMenuLink asChild>
-                                                                        <Link
-                                                                            to={`${langPrefix}/category/${c.slug}`}
-                                                                            data-testid={`nav-cat-${c.slug}`}
-                                                                            className="group relative card-lift flex items-center gap-2.5 rounded-lg border border-border bg-card px-2.5 py-2 text-sm text-foreground transition-colors hover:border-[hsl(var(--accent))]/45"
-                                                                        >
-                                                                            {/* Icon chip — reuses Home pillar pattern */}
-                                                                            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[hsl(var(--accent))]/10 group-hover:bg-[hsl(var(--accent))]/20 transition-colors duration-300">
-                                                                                <Icon className="h-3.5 w-3.5 text-[hsl(var(--accent))]" strokeWidth={2} />
-                                                                            </span>
-                                                                            <span className="font-heading font-semibold leading-tight group-hover:text-[hsl(var(--accent))] transition-colors duration-200">
-                                                                                {lang === "id" ? c.id : c.en}
-                                                                            </span>
-                                                                        </Link>
-                                                                    </NavigationMenuLink>
-                                                                </li>
-                                                            );
-                                                        })}
+                                                    <ul className="space-y-0.5">
+                                                        {group.items.map((c) => (
+                                                            <li key={c.slug}>
+                                                                <NavigationMenuLink asChild>
+                                                                    <Link
+                                                                        to={`${langPrefix}/category/${c.slug}`}
+                                                                        data-testid={`nav-cat-${c.slug}`}
+                                                                        className="block rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                                                    >
+                                                                        {lang === "id" ? c.id : c.en}
+                                                                    </Link>
+                                                                </NavigationMenuLink>
+                                                            </li>
+                                                        ))}
                                                     </ul>
                                                 </div>
                                             ))}
@@ -313,25 +303,19 @@ export default function Header() {
                                 <div className="eyebrow !text-[0.6rem] !tracking-[0.18em] px-1 pt-2 pb-1">
                                     {lang === "id" ? group.label_id : group.label_en}
                                 </div>
-                                {group.items.map((c) => {
-                                    const Icon = c.icon;
-                                    return (
-                                        <NavLink
-                                            key={c.slug}
-                                            to={`${langPrefix}/category/${c.slug}`}
-                                            onClick={() => setOpen(false)}
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2.5 text-sm py-2.5 px-2 border-b border-border last:border-0 transition-colors duration-200 ${isActive ? "text-[hsl(var(--accent))] font-semibold" : "text-muted-foreground hover:text-foreground"}`
-                                            }
-                                            data-testid={`mobile-nav-${c.slug}`}
-                                        >
-                                            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[hsl(var(--accent))]/10">
-                                                <Icon className="h-3 w-3 text-[hsl(var(--accent))]" strokeWidth={2} />
-                                            </span>
-                                            {lang === "id" ? c.id : c.en}
-                                        </NavLink>
-                                    );
-                                })}
+                                {group.items.map((c) => (
+                                    <NavLink
+                                        key={c.slug}
+                                        to={`${langPrefix}/category/${c.slug}`}
+                                        onClick={() => setOpen(false)}
+                                        className={({ isActive }) =>
+                                            `text-sm py-2.5 px-3 border-b border-border last:border-0 transition-colors duration-200 ${isActive ? "text-[hsl(var(--accent))] font-semibold" : "text-muted-foreground hover:text-foreground"}`
+                                        }
+                                        data-testid={`mobile-nav-${c.slug}`}
+                                    >
+                                        {lang === "id" ? c.id : c.en}
+                                    </NavLink>
+                                ))}
                             </div>
                         ))}
                         {user && user !== false && (
