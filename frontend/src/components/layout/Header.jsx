@@ -148,7 +148,7 @@ export default function Header() {
                                 <NavigationMenuItem>
                                     <NavigationMenuTrigger
                                         data-testid="nav-more-trigger"
-                                        className="h-auto rounded-md bg-transparent px-2.5 py-1 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=open]:bg-transparent data-[state=open]:text-foreground"
+                                        className="h-auto rounded-md bg-transparent px-2.5 py-1 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground focus:bg-transparent focus:text-foreground data-[state=open]:bg-transparent data-[state=open]:text-foreground data-[state=open]:hover:bg-transparent data-[state=open]:hover:text-foreground data-[state=open]:focus:bg-transparent"
                                     >
                                         {t("Lainnya", "More")}
                                     </NavigationMenuTrigger>
@@ -166,7 +166,7 @@ export default function Header() {
                                                                     <Link
                                                                         to={`${langPrefix}/category/${c.slug}`}
                                                                         data-testid={`nav-cat-${c.slug}`}
-                                                                        className="block rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                                                        className="block rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                                                                     >
                                                                         {lang === "id" ? c.id : c.en}
                                                                     </Link>
