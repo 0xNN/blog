@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -7,6 +7,7 @@ import { PenSquare, Trash2, Eye, LogOut, Sparkles, Users, FileText, Search, X } 
 import Pagination from "@/components/Pagination";
 import AdminPanel from "@/components/AdminPanel";
 
+// How many rows per page in the Dashboard table.
 const PER_PAGE = 10;
 
 function SkeletonRow() {
@@ -26,11 +27,18 @@ export default function Dashboard() {
     const { user, profile, logout, loading: authLoading } = useAuth();
     const { lang, t } = useLang();
     const nav = useNavigate();
+    const [params, setParams] = useSearchParams();
+
+    // Page is 1-indexed and lives in the URL so refresh/back works.
+    const page = Math.max(1, parseInt(params.get("page") || "1", 10) || 1);
+    // Search input is local state; committed to URL on submit (debounce-free,
+    // explicit submit keeps the API predictable).
+    const [searchInput, setSearchInput] = useState(params.get("q") || "");
+
     const [articles, setArticles] = useState([]);
+    const [pagination, setPagination] = useState({ total: 0, totalPages: 1, hasNext: false, hasPrev: false });
     const [analytics, setAnalytics] = useState(null);
     const [artLoading, setArtLoading] = useState(true);
-    const [page, setPage] = useState(1);
-    const [search, setSearch] = useState("");
 
     useEffect(() => {
         if (!authLoading && !user) nav(`/${lang}/login`);
@@ -39,45 +47,90 @@ export default function Dashboard() {
     useEffect(() => {
         if (!user) return;
         setArtLoading(true);
-        Promise.all([
-            api.get(`/articles?status=draft&limit=100`),
-            api.get(`/articles?status=published&limit=100`),
-        ])
-        .then(([drafts, published]) => {
-            const all = [...drafts.data, ...published.data];
-            const mine = profile?.role === "author" ? all.filter((a) => a.author_id === user.id) : all;
-            setArticles(mine);
-        })
-        .catch(() => {})
-        .finally(() => setArtLoading(false));
+
+        // Dashboard lists both draft + published in one paginated query.
+        // Authors see only their own articles; owners/editors see all.
+        const query = new URLSearchParams({
+            lang,
+            limit: String(PER_PAGE),
+            page: String(page),
+            paginated: "true",
+            status: "draft,published",
+        });
+        if (profile?.role === "author") query.set("author_id", user.id);
+        const q = params.get("q");
+        if (q) query.set("q", q);
+
+        api.get(`/articles?${query.toString()}`)
+            .then((r) => {
+                const res = r.data;
+                if (Array.isArray(res)) {
+                    // Legacy fallback (shouldn't happen with paginated=true, but be safe).
+                    setArticles(res);
+                    setPagination({ total: res.length, totalPages: 1, hasNext: false, hasPrev: false });
+                } else {
+                    setArticles(res.data || []);
+                    setPagination(res.pagination || { total: 0, totalPages: 1, hasNext: false, hasPrev: false });
+                }
+            })
+            .catch(() => {})
+            .finally(() => setArtLoading(false));
 
         if (profile?.role === "owner" || profile?.role === "editor") {
             api.get("/analytics/summary").then((r) => setAnalytics(r.data)).catch(() => {});
         }
-    }, [user, profile]);
+    }, [user, profile, lang, page, params]);
 
     const del = async (id) => {
         if (!confirm(t("Hapus artikel ini?", "Delete this article?"))) return;
         try {
             await api.delete(`/articles/${id}`);
-            setArticles((prev) => prev.filter((a) => a.id !== id));
+            // Remove locally + adjust pagination metadata. If we just deleted the
+            // last row on page N, navigate back to page N-1 so we don't show an
+            // empty page.
+            setArticles((prev) => {
+                const next = prev.filter((a) => a.id !== id);
+                if (next.length === 0 && page > 1) {
+                    const p = new URLSearchParams(params);
+                    p.set("page", String(page - 1));
+                    setParams(p);
+                } else {
+                    setPagination((pg) => ({ ...pg, total: Math.max(0, pg.total - 1) }));
+                }
+                return next;
+            });
         } catch (e) {
             console.error(e);
         }
     };
 
-    const filtered = articles.filter(a => {
-        if (!search) return true;
-        const q = search.toLowerCase();
-        const c = a.content_id || a.content_en;
-        return (c?.title || "").toLowerCase().includes(q)
-            || (a.category_slug || "").includes(q)
-            || (a.status || "").includes(q);
-    });
-    const totalPages = Math.ceil(filtered.length / PER_PAGE);
-    const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+    const submitSearch = (e) => {
+        e.preventDefault();
+        const p = new URLSearchParams(params);
+        if (searchInput) p.set("q", searchInput); else p.delete("q");
+        p.delete("page"); // New filter = start from page 1.
+        setParams(p);
+    };
+
+    const clearSearch = () => {
+        setSearchInput("");
+        const p = new URLSearchParams(params);
+        p.delete("q");
+        p.delete("page");
+        setParams(p);
+    };
+
+    const handlePage = (newPage) => {
+        const p = new URLSearchParams(params);
+        if (newPage > 1) p.set("page", String(newPage)); else p.delete("page");
+        setParams(p);
+    };
 
     if (!user || user === false) return null;
+
+    const showing = articles.length;
+    const from = showing === 0 ? 0 : (page - 1) * PER_PAGE + 1;
+    const to = (page - 1) * PER_PAGE + showing;
 
     return (
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
@@ -122,14 +175,27 @@ export default function Dashboard() {
             <section className="rounded-2xl border border-border overflow-hidden">
                 <div className="px-5 py-4 border-b border-border flex items-center justify-between gap-4">
                     <h2 className="font-heading text-lg font-bold tracking-tight shrink-0">{t("Artikel kamu", "Your articles")}</h2>
-                    <div className="relative flex-1 max-w-xs">
+                    <form onSubmit={submitSearch} className="relative flex-1 max-w-xs">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                        <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+                        <input
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
                             placeholder={t("Cari artikel...", "Search articles...")}
-                            className="w-full pl-8 pr-8 py-1.5 rounded-full border border-border bg-background text-sm outline-none focus:border-[hsl(var(--accent))] transition" />
-                        {search && <button onClick={() => { setSearch(""); setPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="h-3.5 w-3.5 text-muted-foreground" /></button>}
-                    </div>
-                    <span className="text-xs text-muted-foreground font-mono shrink-0">{filtered.length}</span>
+                            data-testid="dashboard-article-search"
+                            className="w-full pl-8 pr-8 py-1.5 rounded-full border border-border bg-background text-sm outline-none focus:border-[hsl(var(--accent))] transition"
+                        />
+                        {searchInput && (
+                            <button
+                                type="button"
+                                onClick={clearSearch}
+                                className="absolute right-2 top-1/2 -translate-y-1/2"
+                                aria-label={t("Hapus pencarian", "Clear search")}
+                            >
+                                <X className="h-3.5 w-3.5 text-muted-foreground" />
+                            </button>
+                        )}
+                    </form>
+                    <span className="text-xs text-muted-foreground font-mono shrink-0">{pagination.total}</span>
                 </div>
                 <ul>
                     {artLoading ? (
@@ -140,8 +206,8 @@ export default function Dashboard() {
                             <SkeletonRow />
                             <SkeletonRow />
                         </>
-                    ) : paginated.length > 0 ? (
-                        paginated.map((a) => {
+                    ) : articles.length > 0 ? (
+                        articles.map((a) => {
                             const c = a.content_id || a.content_en;
                             return (
                                 <li key={a.id} data-testid={`dashboard-article-${a.id}`} className="flex items-center gap-4 px-5 py-4 border-b border-border last:border-0 hover:bg-muted/30">
@@ -172,9 +238,19 @@ export default function Dashboard() {
                         </li>
                     )}
                 </ul>
-                {!artLoading && articles.length > PER_PAGE && (
-                    <div className="px-5 border-t border-border">
-                        <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+                {!artLoading && pagination.total > 0 && (
+                    <div className="px-5 py-3 border-t border-border flex items-center justify-between gap-4">
+                        <div className="text-xs text-muted-foreground font-mono">
+                            {t(
+                                `Menampilkan ${from}–${to} dari ${pagination.total} artikel`,
+                                `Showing ${from}–${to} of ${pagination.total} articles`
+                            )}
+                        </div>
+                        <Pagination
+                            page={page}
+                            totalPages={pagination.totalPages}
+                            onPage={handlePage}
+                        />
                     </div>
                 )}
             </section>

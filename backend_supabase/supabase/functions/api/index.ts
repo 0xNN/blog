@@ -386,13 +386,22 @@ async function handleListArticles(req: Request) {
   const category = url.searchParams.get("category");
   const tag = url.searchParams.get("tag");
   const author = url.searchParams.get("author");
+  const authorId = url.searchParams.get("author_id");
   const q = url.searchParams.get("q");
-  let status = url.searchParams.get("status") || "published";
+  // `status` accepts comma-separated values (e.g. "draft,published") for the
+  // Dashboard which lists both at once. If `any` is passed, no status filter
+  // is applied (authenticated-only, enforced below).
+  const statusParam = url.searchParams.get("status") || "published";
   // Only authenticated users may list non-published (draft/review) articles;
   // otherwise anyone could scrape unpublished content via ?status=draft.
-  if (status !== "published") {
+  const statuses = statusParam.split(",").map((s) => s.trim()).filter(Boolean);
+  const needsAuth = statusParam === "any" || statuses.some((s) => s !== "published");
+  if (needsAuth) {
     const authUser = await getUser(req, false).catch(() => null);
-    if (!authUser) status = "published";
+    if (!authUser) {
+      // Fall back to published-only for unauthenticated callers.
+      statuses.splice(0, statuses.length, "published");
+    }
   }
   const featured = url.searchParams.get("featured");
   const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
@@ -406,13 +415,18 @@ async function handleListArticles(req: Request) {
   let query = supabase
     .from("articles")
     .select("*", selectOpts)
-    .eq("status", status)
     .order("published_at", { ascending: false, nullsFirst: false })
     .range(skip, skip + limit - 1);
 
+  // `status=any` (authenticated) skips the filter entirely; otherwise apply
+  // one or more statuses as an `in()` clause.
+  if (statusParam !== "any" && statuses.length > 0) {
+    query = query.in("status", statuses);
+  }
   if (category) query = query.eq("category_slug", category);
   if (tag) query = query.contains("tags", [tag]);
   if (author) query = query.eq("author_slug", author);
+  if (authorId) query = query.eq("author_id", authorId);
   if (featured === "true") query = query.eq("featured", true);
 
   if (q) {
