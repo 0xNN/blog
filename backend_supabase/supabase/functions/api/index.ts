@@ -396,11 +396,16 @@ async function handleListArticles(req: Request) {
   }
   const featured = url.searchParams.get("featured");
   const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
-  const skip = parseInt(url.searchParams.get("skip") || "0");
+  // `page` takes precedence over `skip` for paginated clients. Page is 1-indexed.
+  const pageParam = parseInt(url.searchParams.get("page") || "0", 10);
+  const skip = pageParam > 0 ? (pageParam - 1) * limit : parseInt(url.searchParams.get("skip") || "0");
+  const paginated = url.searchParams.get("paginated") === "true";
 
+  // count: "exact" returns total row count alongside the page slice — 1 query, not 2.
+  const selectOpts = paginated ? { count: "exact" as const } : undefined;
   let query = supabase
     .from("articles")
-    .select("*")
+    .select("*", selectOpts)
     .eq("status", status)
     .order("published_at", { ascending: false, nullsFirst: false })
     .range(skip, skip + limit - 1);
@@ -421,8 +426,27 @@ async function handleListArticles(req: Request) {
     }
   }
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   if (error) return errorResponse("Internal server error", 500, req);
+
+  // Backward compatible: non-paginated callers (Home, Dashboard, Editor, Authors)
+  // still receive a bare array. Paginated callers (ArticleList) opt-in to a
+  // structured response with total count for server-side pagination.
+  if (paginated) {
+    const total = count ?? 0;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    return jsonResponse({
+      data: data || [],
+      pagination: {
+        page: pageParam > 0 ? pageParam : 1,
+        limit,
+        total,
+        totalPages,
+        hasNext: skip + limit < total,
+        hasPrev: skip > 0,
+      },
+    }, 200, req);
+  }
   return jsonResponse(data || [], 200, req);
 }
 
