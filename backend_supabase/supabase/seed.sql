@@ -1,5 +1,5 @@
 -- ==========================================================
--- Developer Hub — Seed Data  (LOCAL DEV ONLY)
+-- MSNCode — Seed Data  (LOCAL DEV ONLY)
 -- Runs automatically on `supabase db reset`.
 -- DO NOT run against production: it creates demo login accounts
 -- with a known password. In production you sign up your own owner.
@@ -12,17 +12,17 @@ INSERT INTO auth.users
    created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
 VALUES
   ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000001',
-   'authenticated', 'authenticated', 'admin@devhub.io',
+   'authenticated', 'authenticated', 'admin@msncode.dev',
    crypt('devpassword', gen_salt('bf')), now(), now(), now(),
    '{"provider":"email","providers":["email"]}',
    '{"name":"Rafael Owner","slug":"rafael-owner"}'),
   ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000002',
-   'authenticated', 'authenticated', 'author@devhub.io',
+   'authenticated', 'authenticated', 'author@msncode.dev',
    crypt('devpassword', gen_salt('bf')), now(), now(), now(),
    '{"provider":"email","providers":["email"]}',
    '{"name":"Kirana Dewi","slug":"kirana-dewi"}'),
   ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000003',
-   'authenticated', 'authenticated', 'editor@devhub.io',
+   'authenticated', 'authenticated', 'editor@msncode.dev',
    crypt('devpassword', gen_salt('bf')), now(), now(), now(),
    '{"provider":"email","providers":["email"]}',
    '{"name":"Marco Editor","slug":"marco-editor"}')
@@ -30,9 +30,9 @@ ON CONFLICT (id) DO NOTHING;
 
 -- 2) Elevate roles + fill profile details (trigger created them as 'author').
 UPDATE user_profiles SET role = 'owner',
-  bio = 'Founder of Developer Hub. Building tools & writing about the developer journey.',
+  bio = 'Founder of MSNCode. Building tools & writing about the developer journey.',
   avatar_url = 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&h=200&fit=crop',
-  twitter = 'rafael_devhub', github = 'rafael-devhub', website = 'https://devhub.io'
+  twitter = 'rafael_msncode', github = 'rafael-msncode', website = 'https://msncode.dev'
   WHERE id = '00000000-0000-0000-0000-000000000001';
 UPDATE user_profiles SET
   bio = 'Indie hacker & full-stack dev. Writing tutorials from Jakarta.',
@@ -77,10 +77,10 @@ VALUES
 
 -- 4) Sample affiliate link + subscriber.
 INSERT INTO affiliate_links (name, url, merchant, category_slug, description, clicks, active)
-VALUES ('Hostinger', 'https://www.hostinger.com/?REFERRAL=devhub', 'Hostinger',
+VALUES ('Hostinger', 'https://www.hostinger.com/?REFERRAL=msncode', 'Hostinger',
   'tools-review', 'Web hosting murah untuk deploy blog developer', 0, true)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO subscribers (email, active)
-VALUES ('test@devhub.io', true)
+VALUES ('test@msncode.dev', true)
 ON CONFLICT (email) DO NOTHING;

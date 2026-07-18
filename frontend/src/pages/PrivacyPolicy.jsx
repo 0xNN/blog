@@ -25,8 +25,8 @@ export default function PrivacyPolicy() {
                 path={`/${lang}/privacy`}
                 title={t("Kebijakan Privasi", "Privacy Policy")}
                 description={t(
-                    "Kebijakan privasi Developer Hub: data yang kami kumpulkan, cookies, iklan pihak ketiga, dan hak Anda.",
-                    "Developer Hub privacy policy: data we collect, cookies, third-party ads, and your rights."
+                    "Kebijakan privasi MSNCode: data yang kami kumpulkan, cookies, iklan pihak ketiga, dan hak Anda.",
+                    "MSNCode privacy policy: data we collect, cookies, third-party ads, and your rights."
                 )}
             />
             <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">

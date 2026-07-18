@@ -1,4 +1,4 @@
-# Developer Hub — Roadmap Monetisasi & Growth (Versi Agent)
+# MSNCode — Roadmap Monetisasi & Growth (Versi Agent)
 
 > Turunan dari MONETIZATION_ROADMAP.md, disesuaikan dengan kondisi app saat ini:
 > Vite SPA (client-side), backend Supabase Edge Functions + PostgreSQL sudah matang, auth/SEO/AI sudah ada,

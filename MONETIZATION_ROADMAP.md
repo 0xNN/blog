@@ -1,4 +1,4 @@
-# Developer Hub — Monetization & Growth Roadmap
+# MSNCode — Monetization & Growth Roadmap
 
 > Tujuan: mengubah blog ini menjadi aset penghasil **passive income** melalui traffic organik + monetisasi berlapis.
 > Prinsip: **passive income = traffic × pendapatan-per-pengunjung × compounding − biaya maintenance**.

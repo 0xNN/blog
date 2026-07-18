@@ -1,7 +1,7 @@
-# Developer Hub — Product Requirements
+# MSNCode — Product Requirements
 
 ## Original Problem Statement
-Developer Hub — Blog Multi-Niche untuk Developer. A bilingual (ID + EN) developer blog platform with 11 content pillars, interactive code playground (Sandpack), multi-author system, SEO-first architecture, dark mode, and AdSense-ready monetization.
+MSNCode — Blog Multi-Niche untuk Developer. A bilingual (ID + EN) developer blog platform with 11 content pillars, interactive code playground (Sandpack), multi-author system, SEO-first architecture, dark mode, and AdSense-ready monetization.
 
 ## User Personas
 - **Reader**: Junior–senior developer (ID/global), indie hacker, tech worker.
@@ -70,9 +70,9 @@ Developer Hub — Blog Multi-Niche untuk Developer. A bilingual (ID + EN) develo
 
 ## Test Credentials (local dev only — via `seed.sql`)
 All passwords: `devpassword` (bcrypt-hashed in seed). Only exist after `supabase db reset` against local Supabase.
-- Owner: `admin@devhub.io`
-- Author: `author@devhub.io`
-- Editor: `editor@devhub.io`
+- Owner: `admin@msncode.dev`
+- Author: `author@msncode.dev`
+- Editor: `editor@msncode.dev`
 
 ## API Coverage
 Edge Function `api/index.ts` routes:

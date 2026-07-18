@@ -1,4 +1,4 @@
-# Auth Testing — Developer Hub
+# Auth Testing — MSNCode
 
 ## Arsitektur Auth (Supabase Auth)
 
@@ -47,9 +47,9 @@ Dibuat oleh `backend_supabase/supabase/seed.sql` (jalankan `supabase db reset`):
 
 | Email | Password | Role |
 |---|---|---|
-| `admin@devhub.io` | `devpassword` | owner |
-| `editor@devhub.io` | `devpassword` | editor |
-| `author@devhub.io` | `devpassword` | author |
+| `admin@msncode.dev` | `devpassword` | owner |
+| `editor@msncode.dev` | `devpassword` | editor |
+| `author@msncode.dev` | `devpassword` | author |
 
 > Password di-hash dengan bcrypt (`crypt('devpassword', gen_salt('bf'))`) di seed. Akun ini hanya ada di local Supabase, bukan production.
 

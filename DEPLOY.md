@@ -1,4 +1,4 @@
-# Deploy Guide — Developer Hub
+# Deploy Guide — MSNCode
 
 Target arsitektur (semua di bawah 1 domain `msncode.dev`, browser hanya bicara ke frontend → tanpa CORS):
 

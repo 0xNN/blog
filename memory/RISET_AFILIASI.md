@@ -1,4 +1,4 @@
-# Riset Program Afiliasi — Developer Hub
+# Riset Program Afiliasi — MSNCode
 
 **Niche blog:** developer, crypto, tools review
 **Target:** program yang ramah Indonesia (pembayaran, akses, relevansi)
@@ -115,7 +115,7 @@
 1. **Disclosure wajib** — setiap link afiliasi harus ada disclaimer (sudah ada di `AffiliateBox.jsx`)
 2. **Pajak** — kalau udah lumayan ($500+/tahun), konsultasi pajak
 3. **Binance** — disclaimer resiko crypto harus jelas
-4. **Hostinger udah** — gue udah masukkin hostinger sebagai contoh di seed, tinggal ganti `REFERRAL=devhub` sama ID affiliate lo yang asli
+4. **Hostinger udah** — gue udah masukkin hostinger sebagai contoh di seed, tinggal ganti `REFERRAL=msncode` sama ID affiliate lo yang asli
 
 ---
 

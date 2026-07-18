@@ -1,5 +1,5 @@
 -- ==========================================================
--- Developer Hub — Supabase Migration: Schema Init
+-- MSNCode — Supabase Migration: Schema Init
 -- ==========================================================
 
 -- -------------------- EXTENSIONS --------------------

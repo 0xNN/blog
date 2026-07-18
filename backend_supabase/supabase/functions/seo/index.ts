@@ -98,7 +98,7 @@ async function handleRss(lang: string, req: Request) {
     .order("published_at", { ascending: false })
     .limit(50);
 
-  const siteTitle = `Developer Hub${lang === "id" ? " (Bahasa Indonesia)" : ""}`;
+  const siteTitle = `MSNCode${lang === "id" ? " (Bahasa Indonesia)" : ""}`;
   const langCode = lang === "id" ? "id-ID" : "en-US";
 
   const items = (articles || [])

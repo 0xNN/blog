@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-"Developer Hub" (brand: **MSNCode**) — a bilingual (Indonesian `id` / English `en`) developer blog. **Supabase** backend (PostgreSQL + Edge Functions in Deno/TypeScript), **Vite + React 19** frontend. Hosted at `blog.msncode.dev`.
+"MSNCode" (hosted at `blog.msncode.dev`) — a bilingual (Indonesian `id` / English `en`) developer blog. **Supabase** backend (PostgreSQL + Edge Functions in Deno/TypeScript), **Vite + React 19** frontend.
 
 > **Migration note:** The project originally used FastAPI + MongoDB (the old `backend/` folder is now an empty `.venv` shell; ignore it). The active backend lives in `backend_supabase/`. `DEPLOY.md` and `auth_testing.md` have been updated for the current Supabase architecture.
 
@@ -138,9 +138,9 @@ Required Deno env vars (set in Supabase Dashboard → Edge Functions → Secrets
 
 ## Seeded test accounts (local dev only — via `seed.sql`)
 All passwords: `devpassword` (bcrypt-hashed in seed). These only exist after `supabase db reset` against local Supabase.
-- Owner: `admin@devhub.io`
-- Author: `author@devhub.io`
-- Editor: `editor@devhub.io`
+- Owner: `admin@msncode.dev`
+- Author: `author@msncode.dev`
+- Editor: `editor@msncode.dev`
 
 ## Monetization
 - **Affiliate links** — `affiliate_links` table, managed by owner only. Redirect via `/r/<id>` (tracked). Frontend `AffiliateBox.jsx` shows links per category on article pages. `affiliateHref()` in `api.js` builds same-origin `/r/` URLs (proxied by Vercel).

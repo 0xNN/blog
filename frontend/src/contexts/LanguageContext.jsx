@@ -5,11 +5,11 @@ const LanguageContext = createContext(null);
 export function LanguageProvider({ children }) {
     const [lang, setLang] = useState(() => {
         if (typeof window === "undefined") return "id";
-        return localStorage.getItem("devhub-lang") || "id";
+        return localStorage.getItem("msncode-lang") || "id";
     });
 
     useEffect(() => {
-        localStorage.setItem("devhub-lang", lang);
+        localStorage.setItem("msncode-lang", lang);
         document.documentElement.lang = lang;
     }, [lang]);
 

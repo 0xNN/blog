@@ -1099,7 +1099,7 @@ const routes: Array<{
   { pattern: /^\/invites\/([a-f0-9-]+)$/, methods: ["GET", "DELETE"], handler: handleInvites, requireAuth: true },
   { pattern: /^\/invites$/, methods: ["GET", "POST"], handler: handleInvites, requireAuth: true },
   { pattern: /^\/subscribers$/, methods: ["GET"], handler: handleSubscribersList, requireAuth: true },
-  { pattern: /^\/$/, methods: ["GET"], handler: () => jsonResponse({ name: "Developer Hub API", version: "2.0" }) },
+  { pattern: /^\/$/, methods: ["GET"], handler: () => jsonResponse({ name: "MSNCode API", version: "2.0" }) },
 ];
 
 serve(async (req) => {
