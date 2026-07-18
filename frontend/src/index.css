@@ -41,30 +41,32 @@
 }
 
 .dark {
-    --background: 0 0% 3%;
-    --foreground: 240 6% 96%;
-    --card: 240 6% 8%;
-    --card-foreground: 240 6% 96%;
-    --popover: 240 6% 9%;
-    --popover-foreground: 240 6% 96%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 8% 6%;
-    --secondary: 240 5% 15%;
-    --secondary-foreground: 240 6% 96%;
-    --muted: 240 5% 13%;
-    --muted-foreground: 240 5% 63%;
-    --accent: 170 60% 42%;
+    /* Warm navy palette — matches MSNCode landing design system.
+       Shifted from near-black (hsl 0 0% 3%) to deep navy for breathable dark mode. */
+    --background: 228 28% 3.5%;
+    --foreground: 228 12% 93%;
+    --card: 228 22% 7%;
+    --card-foreground: 228 12% 93%;
+    --popover: 228 20% 8%;
+    --popover-foreground: 228 12% 93%;
+    --primary: 170 60% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 228 15% 12%;
+    --secondary-foreground: 228 12% 88%;
+    --muted: 228 15% 10%;
+    --muted-foreground: 228 10% 56%;
+    --accent: 170 60% 48%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 62% 52%;
+    --destructive: 0 60% 55%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5% 16%;
-    --border-strong: 240 6% 26%;
-    --input: 240 5% 18%;
-    --ring: 170 60% 42%;
+    --border: 228 14% 14%;
+    --border-strong: 228 16% 22%;
+    --input: 228 14% 15%;
+    --ring: 170 60% 48%;
 
-    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.4);
-    --shadow-md: 0 12px 32px -14px hsl(0 0% 0% / 0.6);
-    --shadow-lg: 0 30px 70px -24px hsl(0 0% 0% / 0.7);
+    --shadow-sm: 0 1px 2px hsl(228 20% 2% / 0.4);
+    --shadow-md: 0 12px 32px -14px hsl(228 20% 2% / 0.55);
+    --shadow-lg: 0 30px 70px -24px hsl(228 20% 2% / 0.65);
 }
 
 * {
