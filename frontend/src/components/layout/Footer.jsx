@@ -100,7 +100,7 @@ export default function Footer() {
 
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
-                                {t("Perusahaan", "Company")}
+                                {t("Lainnya", "More")}
                             </p>
                             <ul className="space-y-2.5 text-sm">
                                 <li>
