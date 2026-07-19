@@ -128,6 +128,7 @@ export default function Header() {
                     >
                         <BrandMark size={26} />
                         <span>MSN<span className="text-[hsl(var(--accent))]">Code</span></span>
+                        <span className="hidden sm:inline font-mono text-[0.6rem] tracking-[0.12em] text-muted-foreground leading-none ml-0.5">BLOG</span>
                     </Link>
 
                     <nav className="hidden lg:flex items-center gap-5 text-sm font-medium">
