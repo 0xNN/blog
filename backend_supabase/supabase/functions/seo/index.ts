@@ -12,25 +12,33 @@ const securityHeaders: Record<string, string> = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
 };
 
+function responseHeaders(req: Request, contentType: string, cacheControl: string): Headers {
+  const headers = new Headers({
+    ...corsHeaders(req),
+    ...securityHeaders,
+  });
+  headers.set("Content-Type", contentType);
+  headers.set("Cache-Control", cacheControl);
+  return headers;
+}
+
 function xmlResponse(body: string, req: Request): Response {
   return new Response(body, {
-    headers: {
-      ...corsHeaders(req),
-      ...securityHeaders,
-      "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=900, s-maxage=3600",
-    },
+    headers: responseHeaders(
+      req,
+      "application/xml; charset=utf-8",
+      "public, max-age=900, s-maxage=3600",
+    ),
   });
 }
 
 function textResponse(body: string, req: Request): Response {
   return new Response(body, {
-    headers: {
-      ...corsHeaders(req),
-      ...securityHeaders,
-      "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, s-maxage=86400",
-    },
+    headers: responseHeaders(
+      req,
+      "text/plain; charset=utf-8",
+      "public, max-age=3600, s-maxage=86400",
+    ),
   });
 }
 
