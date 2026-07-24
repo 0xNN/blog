@@ -5,6 +5,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import ArticleCard from "@/components/ArticleCard";
 import ArticleCardSkeleton from "@/components/ArticleCardSkeleton";
 import Pagination from "@/components/Pagination";
+import { PageSeo } from "@/components/Seo";
 import { Search } from "lucide-react";
 
 // How many articles per page. Lower = faster initial render + less data transfer.
@@ -69,6 +70,18 @@ export default function ArticleList() {
     const title = categorySlug
         ? categorySlug.replace(/-/g, " ").toUpperCase()
         : t("Semua Artikel", "All Articles");
+    const seoPath = categorySlug
+        ? `/${lang}/category/${categorySlug}`
+        : `/${lang}/blog`;
+    const seoDescription = categorySlug
+        ? t(
+            `Artikel MSNCode tentang ${categorySlug.replace(/-/g, " ")}: tutorial praktis, penjelasan teknis, dan pengalaman nyata developer.`,
+            `MSNCode articles about ${categorySlug.replace(/-/g, " ")}: practical tutorials, technical explanations, and real developer experience.`
+        )
+        : t(
+            "Kumpulan tutorial coding, solusi error, AI, keamanan, karier, dan catatan membangun produk dari pengalaman developer Indonesia.",
+            "Coding tutorials, error fixes, AI, security, career notes, and product-building lessons from an Indonesian developer."
+        );
 
     const showing = articles.length;
     const from = showing === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
@@ -76,6 +89,13 @@ export default function ArticleList() {
 
     return (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+            <PageSeo
+                lang={lang}
+                path={seoPath}
+                title={q ? t(`Hasil pencarian: ${q}`, `Search results: ${q}`) : title}
+                description={seoDescription}
+                noIndex={Boolean(q) || page > 1}
+            />
             <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">

@@ -23,7 +23,9 @@ import AuthCallback from "@/pages/AuthCallback";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfUse from "@/pages/TermsOfUse";
 import NotFound from "@/pages/NotFound";
+import { PageSeo } from "@/components/Seo";
 
 import "@/index.css";
 
@@ -44,10 +46,23 @@ function ScrollToTop() {
 }
 
 function AppShell() {
+    const location = useLocation();
+    const { lang } = useLang();
+    const privatePath = /^\/(id|en)\/(login|register|dashboard|editor|invite|auth\/callback)(\/|$)/.test(location.pathname);
+
     return (
         <>
             <div className="noise-overlay" />
             <ScrollToTop />
+            {privatePath && (
+                <PageSeo
+                    lang={lang}
+                    path={location.pathname}
+                    title="MSNCode"
+                    description=""
+                    noIndex
+                />
+            )}
             <Header />
             <main className="min-h-[70vh] relative z-10">
                 <Routes>
@@ -67,6 +82,7 @@ function AppShell() {
                     <Route path="about" element={<About />} />
                     <Route path="contact" element={<Contact />} />
                     <Route path="privacy" element={<PrivacyPolicy />} />
+                    <Route path="terms" element={<TermsOfUse />} />
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </main>

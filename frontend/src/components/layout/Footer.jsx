@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Github, Twitter, Rss } from "lucide-react";
+import { Rss } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import NewsletterForm from "@/components/NewsletterForm";
 import BrandMark from "@/components/BrandMark";
@@ -72,22 +72,6 @@ export default function Footer() {
                             </p>
                             <div className="flex items-center gap-2">
                                 <a
-                                    href="#"
-                                    aria-label="Twitter"
-                                    data-testid="footer-twitter"
-                                    className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))] hover:text-[hsl(var(--accent))] transition-colors duration-200"
-                                >
-                                    <Twitter className="h-4 w-4" />
-                                </a>
-                                <a
-                                    href="#"
-                                    aria-label="Github"
-                                    data-testid="footer-github"
-                                    className="p-2 rounded-full border border-border hover:border-[hsl(var(--accent))] hover:text-[hsl(var(--accent))] transition-colors duration-200"
-                                >
-                                    <Github className="h-4 w-4" />
-                                </a>
-                                <a
                                     href="/rss.xml?lang=id"
                                     aria-label="RSS"
                                     data-testid="footer-rss"
@@ -121,6 +105,11 @@ export default function Footer() {
                                 <li>
                                     <Link to={`/${lang}/privacy`} data-testid="footer-privacy" className="text-muted-foreground hover:text-[hsl(var(--accent))] transition-colors duration-200">
                                         {t("Privasi", "Privacy")}
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link to={`/${lang}/terms`} data-testid="footer-terms" className="text-muted-foreground hover:text-[hsl(var(--accent))] transition-colors duration-200">
+                                        {t("Ketentuan", "Terms")}
                                     </Link>
                                 </li>
                             </ul>

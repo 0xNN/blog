@@ -10,18 +10,18 @@ const SITE_NAME = "MSNCode";
  * We avoid react-helmet-async because it has issues with React 19 for meta/link/script children.
  */
 function setHeadTags(tags) {
-    // Remove any previously injected tags
+    // Remove tags injected for the previous route. Static tags from index.html
+    // are updated in place and deliberately kept as a crawler-safe fallback.
     document.querySelectorAll('[data-seo="1"]').forEach((el) => el.remove());
 
     for (const t of tags) {
         if (!t) continue;
-        // For meta[name] tags that already exist (e.g. CRA default 'description'),
-        // update in place instead of duplicating.
-        if (t.tag === "meta" && t.attrs?.name) {
-            const existing = document.head.querySelector(`meta[name="${t.attrs.name}"]:not([data-seo])`);
+        if (t.tag === "meta" && (t.attrs?.name || t.attrs?.property)) {
+            const key = t.attrs.name ? "name" : "property";
+            const value = t.attrs[key];
+            const existing = document.head.querySelector(`meta[${key}="${value}"]:not([data-seo])`);
             if (existing) {
                 existing.setAttribute("content", t.attrs.content ?? "");
-                existing.setAttribute("data-seo", "1");
                 continue;
             }
         }
@@ -90,9 +90,11 @@ export function ArticleSeo({ article, lang }) {
         setHtmlLang(lang);
         setHeadTags([
             { tag: "meta", attrs: { name: "description", content: description } },
+            { tag: "meta", attrs: { name: "robots", content: "index, follow, max-image-preview:large" } },
             { tag: "link", attrs: { rel: "canonical", href: url } },
             other?.slug && { tag: "link", attrs: { rel: "alternate", hreflang: otherLang, href: `${SITE_URL}/${otherLang}/blog/${other.slug}` } },
             { tag: "link", attrs: { rel: "alternate", hreflang: lang, href: url } },
+            { tag: "link", attrs: { rel: "alternate", hreflang: "x-default", href: `${SITE_URL}/id/blog/${article.content_id?.slug || content.slug}` } },
             { tag: "meta", attrs: { property: "og:type", content: "article" } },
             { tag: "meta", attrs: { property: "og:site_name", content: SITE_NAME } },
             { tag: "meta", attrs: { property: "og:title", content: content.title } },
@@ -122,23 +124,31 @@ export function ArticleSeo({ article, lang }) {
     return null;
 }
 
-export function PageSeo({ title, description, path, lang }) {
+export function PageSeo({ title, description, path, lang, noIndex = false }) {
     useEffect(() => {
         const url = `${SITE_URL}${path || `/${lang}`}`;
         const fullTitle = title ? `${title} · ${SITE_NAME}` : SITE_NAME;
+        const otherLang = lang === "id" ? "en" : "id";
+        const localizedPath = (path || `/${lang}`).replace(/^\/(id|en)(?=\/|$)/, `/${otherLang}`);
+        const defaultPath = (path || `/${lang}`).replace(/^\/(id|en)(?=\/|$)/, "/id");
         setTitle(fullTitle);
         setHtmlLang(lang);
         setHeadTags([
             { tag: "meta", attrs: { name: "description", content: description || "" } },
+            { tag: "meta", attrs: { name: "robots", content: noIndex ? "noindex, follow" : "index, follow, max-image-preview:large" } },
             { tag: "link", attrs: { rel: "canonical", href: url } },
+            !noIndex && { tag: "link", attrs: { rel: "alternate", hreflang: lang, href: url } },
+            !noIndex && { tag: "link", attrs: { rel: "alternate", hreflang: otherLang, href: `${SITE_URL}${localizedPath}` } },
+            !noIndex && { tag: "link", attrs: { rel: "alternate", hreflang: "x-default", href: `${SITE_URL}${defaultPath}` } },
             { tag: "meta", attrs: { property: "og:site_name", content: SITE_NAME } },
+            { tag: "meta", attrs: { property: "og:type", content: "website" } },
             { tag: "meta", attrs: { property: "og:title", content: fullTitle } },
             { tag: "meta", attrs: { property: "og:description", content: description || "" } },
             { tag: "meta", attrs: { property: "og:url", content: url } },
             { tag: "meta", attrs: { name: "twitter:card", content: "summary" } },
         ]);
         return () => document.querySelectorAll('[data-seo="1"]').forEach((el) => el.remove());
-    }, [title, description, path, lang]);
+    }, [title, description, path, lang, noIndex]);
 
     return null;
 }
@@ -165,6 +175,7 @@ export function AuthorSeo({ author, lang }) {
         setHtmlLang(lang);
         setHeadTags([
             { tag: "meta", attrs: { name: "description", content: description } },
+            { tag: "meta", attrs: { name: "robots", content: "index, follow, max-image-preview:large" } },
             { tag: "link", attrs: { rel: "canonical", href: url } },
             { tag: "meta", attrs: { property: "og:type", content: "profile" } },
             { tag: "meta", attrs: { property: "og:title", content: author.name } },
